@@ -1,8 +1,19 @@
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+if (!process.env.OPENAI_EMAIL || !process.env.OPENAI_PASSWORD) {
+  throw new Error(`请设置环境变量 OPENAI_EMAIL 和 OPENAI_PASSWORD`);
+  process.exit(1);
+}
+
 export default {
-  // 填入你的session token
-  chatGPTSessionToken: '',
-  clearanceToken: '',
-  userAgent: '',
+  email: process.env.OPENAI_EMAIL,
+  password: process.env.OPENAI_PASSWORD,
+  // // 填入你的session token
+  // chatGPTSessionToken: '',
+  // clearanceToken: '',
+  // userAgent: '',
   // 设置获取消息的重试次数
   retryTimes: 3,
   // 在群组中设置唤醒微信机器人的关键词

@@ -1,3 +1,5 @@
+import { spawnSync } from 'child_process';
+
 const sleep = (time: number) => {
   return new Promise((resolve) => {
     setTimeout(resolve, time);
@@ -38,4 +40,8 @@ export const retryRequest = async <T>(
   }
 
   return output[1];
+};
+
+export const pdfToWord = async (pdfFilePath: string, wordFilePath: string) => {
+  spawnSync(`python3`, ['./app/main.py', pdfFilePath, wordFilePath]);
 };

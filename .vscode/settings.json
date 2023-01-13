@@ -55,9 +55,8 @@
     "editor.wordWrap": "wordWrapColumn",
     "editor.wordWrapColumn": 80
   },
-  "cSpell.words": [
-    "commitlint",
-    "kolorist",
-    "nanospinner"
-  ]
+  "cSpell.words": ["commitlint", "kolorist", "nanospinner"],
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
 }
