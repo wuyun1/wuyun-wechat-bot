@@ -23,11 +23,12 @@ ENV LANG=en_US.UTF-8 \
 
 ENV S6_OVERLAY_VERSION=3.1.2.1
 
+
 # 首先加用户，防止 uid/gid 不稳定
 RUN set -ex && \
     groupadd user && useradd -m -g user user && \
     # 安装依赖和代码
-    apt-get update && apt-get upgrade -y # && \
+    apt-get update && apt-get upgrade -y && \
     apt-get install -y \
         git \
         curl \
@@ -35,9 +36,16 @@ RUN set -ex && \
         nginx sudo \
         # python-numpy \
         xorg openbox rxvt-unicode && \
+    if [ "x$ALIYUN" != "xnone" ] ; then \
+      (git config --global url."https://github.91chi.fun/https://github.com".insteadOf https://github.com && export HTTP_GIT_PREFIX="https://github.91chi.fun/") ; \
+    else \
+      export HTTP_GIT_PREFIX="" ; \
+    fi && \
     # s6-overlay
-    wget -O - https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz | tar -C / -xpvJ && \
-    wget -O - https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-x86_64.tar.xz | tar -C / -xpvJ && \
+    wget -O /tmp/s6-overlay-noarch.tar.xz ${HTTP_GIT_PREFIX}https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz && \
+    tar -C / -xpvJf /tmp/s6-overlay-noarch.tar.xz && rm -rf /tmp/s6-overlay-noarch.tar.xz && \
+    wget -O /tmp/s6-overlay-x86_64.tar.xz ${HTTP_GIT_PREFIX}https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-x86_64.tar.xz && \
+    tar -C / -xpvJf /tmp/s6-overlay-x86_64.tar.xz && rm -rf /tmp/s6-overlay-x86_64.tar.xz && \
     # workaround for https://github.com/just-containers/s6-overlay/issues/158
     ln -s /init /init.entrypoint && \
     # tigervnc
@@ -114,10 +122,9 @@ RUN apt-get update && apt-get upgrade -y && \
 COPY ./requirements.txt /home/python-user/app/requirements.txt
 
 RUN if [ "x$ALIYUN" != "xnone" ] ; then \
-      pip install -i https://pypi.tuna.tsinghua.edu.cn/simple --no-cache-dir --upgrade -r /home/python-user/app/requirements.txt; \
-    else \
-      pip install --no-cache-dir --upgrade -r /home/python-user/app/requirements.txt; \
-    fi
+      pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple; \
+    fi && \
+    pip install --no-cache-dir --upgrade -r /home/python-user/app/requirements.txt
 
 # USER root
 
