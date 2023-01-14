@@ -33,6 +33,7 @@ RUN set -ex && \
         curl \
         ca-certificates wget locales \
         nginx sudo \
+        xz-utils \
         # python-numpy \
         xorg openbox rxvt-unicode
     # apt-get purge -y git wget && \
