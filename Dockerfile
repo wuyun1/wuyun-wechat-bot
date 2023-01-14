@@ -19,10 +19,9 @@ ENV LANG=en_US.UTF-8 \
     VNC_PASSWD=MAX8char \
     USER_PASSWD=abc1234 \
     DEBIAN_FRONTEND=noninteractive \
-    GIT_SSL_NO_VERIFY=1
-
-ENV S6_OVERLAY_VERSION=3.1.2.1
-
+    GIT_SSL_NO_VERIFY=1 \
+    S6_OVERLAY_VERSION=3.1.2.1 \
+    TIGERVNC_VERSION=1.12.90
 
 # 首先加用户，防止 uid/gid 不稳定
 RUN set -ex && \
@@ -35,8 +34,13 @@ RUN set -ex && \
         ca-certificates wget locales \
         nginx sudo \
         # python-numpy \
-        xorg openbox rxvt-unicode && \
-    if [ "x$ALIYUN" != "xnone" ] ; then \
+        xorg openbox rxvt-unicode
+    # apt-get purge -y git wget && \
+    # apt-get autoremove -y && \
+    # apt-get clean && \
+    # rm -fr /tmp/* /app/src/novnc/.git /app/src/websockify/.git /var/lib/apt/lists
+
+RUN if [ "x$ALIYUN" != "xnone" ] ; then \
       (git config --global url."https://github.91chi.fun/https://github.com".insteadOf https://github.com && export HTTP_GIT_PREFIX="https://github.91chi.fun/") ; \
     else \
       export HTTP_GIT_PREFIX="" ; \
@@ -49,19 +53,16 @@ RUN set -ex && \
     # workaround for https://github.com/just-containers/s6-overlay/issues/158
     ln -s /init /init.entrypoint && \
     # tigervnc
-    wget -O /tmp/tigervnc.tar.gz https://nchc.dl.sourceforge.net/project/tigervnc/beta/1.13beta/tigervnc-1.12.90.x86_64.tar.gz && \
+    wget -O /tmp/tigervnc.tar.gz https://nchc.dl.sourceforge.net/project/tigervnc/beta/1.13beta/tigervnc-${TIGERVNC_VERSION}.x86_64.tar.gz && \
     tar xzf /tmp/tigervnc.tar.gz -C /tmp && \
-    chown root:root -R /tmp/tigervnc-1.12.90.x86_64 && \
-    tar c -C /tmp/tigervnc-1.12.90.x86_64 usr | tar x -C / && \
+    chown root:root -R /tmp/tigervnc-${TIGERVNC_VERSION}.x86_64 && \
+    tar c -C /tmp/tigervnc-${TIGERVNC_VERSION}.x86_64 usr | tar x -C / && \
     locale-gen en_US.UTF-8 && \
     # novnc
     mkdir -p /app/src && \
     git clone --depth=1 https://github.com/novnc/noVNC.git /app/src/novnc && \
-    git clone --depth=1 https://github.com/novnc/websockify.git /app/src/websockify # && /
-    # apt-get purge -y git wget && \
-    # apt-get autoremove -y && \
-    # apt-get clean && \
-    # rm -fr /tmp/* /app/src/novnc/.git /app/src/websockify/.git /var/lib/apt/lists
+    git clone --depth=1 https://github.com/novnc/websockify.git /app/src/websockify
+
 
 # copy files
 COPY ./vnc-docker-root /
@@ -90,7 +91,7 @@ CMD ["start"]
 #     && node --version \
 #     && npm --version
 
-# FROM novnc-node-18 AS laststage
+FROM novnc-node-18 AS laststage
 
 RUN groupadd -r python-user && useradd -r -m -g python-user python-user
 
