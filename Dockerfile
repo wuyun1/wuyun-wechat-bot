@@ -44,7 +44,8 @@ RUN set -ex && \
     # rm -fr /tmp/* /app/src/novnc/.git /app/src/websockify/.git /var/lib/apt/lists
 
 RUN if [ "x$ALIYUN" != "xnone" ] ; then \
-      (git config --global url."https://github.91chi.fun/https://github.com".insteadOf https://github.com && export HTTP_GIT_PREFIX="https://github.91chi.fun/") ; \
+      export HTTP_GIT_PREFIX="https://github.91chi.fun/" && \
+      git config --global url."https://github.91chi.fun/https://github.com".insteadOf https://github.com ; \
     else \
       export HTTP_GIT_PREFIX="" ; \
     fi && \
