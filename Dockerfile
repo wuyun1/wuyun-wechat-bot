@@ -2,11 +2,13 @@
 FROM node:18-slim AS novnc-node-18
 # FROM ubuntu
 
-ADD ./sources.list /etc/apt/sources.list
+ARG ALIYUN=""
+
+ADD ./sources.list /tmp/sources.list.1
+
+RUN if [ "x$ALIYUN" != "xnone" ] ; then mv -f /tmp/sources.list.1 /etc/apt/sources.list ; else rm -rf /tmp/sources.list.1 ; fi
 
 # RUN apt update -y && apt install --reinstall ca-certificates -y
-
-# ADD ./sources.list /etc/apt/sources.list
 
 # 各种环境变量
 ENV LANG=en_US.UTF-8 \
@@ -118,11 +120,15 @@ EXPOSE 8000
 
 WORKDIR /app
 
+
 ADD package.json package-lock.json .npmrc /app/
 
-RUN npm config set registry https://registry.npmmirror.com/ \
-    && npm config set disturl https://npm.taobao.org/dist \
-    && npm config set puppeteer_download_host https://npm.taobao.org/mirrors && npm install \
+ADD .npmrc /tmp/.npmrc2
+
+RUN if [ "x$ALIYUN" != "xnone" ] ; then mv -f /tmp/.npmrc2 /app/.npmrc; else rm -rf  /tmp/.npmrc2; fi
+
+
+RUN npm install \
      && npm run puppet-install
 
 # # Suppress an apt-key warning about standard out not being a terminal. Use in this script is safe.
@@ -142,4 +148,5 @@ RUN chmod +x /app/vncmain.sh
 # CMD ["node", "lib/bundle.esm.js"]
 
 # docker build . -t wechatbot:latest
+# docker build . -t wechatbot:latest --build-arg ALIYUN=none
 # docker run -ti --name vnc-test --env-file .env -p 3000:3000 -p 8000:8000  --rm oott123/novnc:latest bash
