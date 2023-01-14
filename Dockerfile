@@ -94,6 +94,8 @@ CMD ["start"]
 
 FROM novnc-node-18 AS laststage
 
+ARG ALIYUN=""
+
 RUN groupadd -r python-user && useradd -r -m -g python-user python-user
 
 # USER python-user
