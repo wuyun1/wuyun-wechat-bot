@@ -27,4 +27,4 @@
 
 
 # (cd /home/python-user/app && ls -lah)
-(cd /app && node lib/bundle.esm.js)
+(cd /app && npm run dev2)

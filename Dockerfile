@@ -22,8 +22,8 @@ ENV LANG=en_US.UTF-8 \
     USER_PASSWD=abc1234 \
     DEBIAN_FRONTEND=noninteractive \
     GIT_SSL_NO_VERIFY=1 \
-    S6_OVERLAY_VERSION=3.1.2.1 \
-    TIGERVNC_VERSION=1.12.90
+    TIGERVNC_VERSION=1.12.0 \
+    LANGUAGE=en_US.UTF-8
 
 # 首先加用户，防止 uid/gid 不稳定
 RUN set -ex && \
@@ -33,8 +33,10 @@ RUN set -ex && \
     apt-get install -y \
         git \
         curl \
+        # tightvncserver \
         ca-certificates wget locales \
         nginx sudo \
+        tmux \
         xz-utils \
         # python-numpy \
         xorg openbox rxvt-unicode
@@ -49,15 +51,8 @@ RUN if [ "x$ALIYUN" != "xnone" ] ; then \
     else \
       export HTTP_GIT_PREFIX="" ; \
     fi && \
-    # s6-overlay
-    wget -O /tmp/s6-overlay-noarch.tar.xz ${HTTP_GIT_PREFIX}https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz && \
-    tar -C / -xpvJf /tmp/s6-overlay-noarch.tar.xz && rm -rf /tmp/s6-overlay-noarch.tar.xz && \
-    wget -O /tmp/s6-overlay-x86_64.tar.xz ${HTTP_GIT_PREFIX}https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-x86_64.tar.xz && \
-    tar -C / -xpvJf /tmp/s6-overlay-x86_64.tar.xz && rm -rf /tmp/s6-overlay-x86_64.tar.xz && \
-    # workaround for https://github.com/just-containers/s6-overlay/issues/158
-    ln -s /init /init.entrypoint && \
     # tigervnc
-    wget -O /tmp/tigervnc.tar.gz https://nchc.dl.sourceforge.net/project/tigervnc/beta/1.13beta/tigervnc-${TIGERVNC_VERSION}.x86_64.tar.gz && \
+    wget -O /tmp/tigervnc.tar.gz https://nchc.dl.sourceforge.net/project/tigervnc/stable/${TIGERVNC_VERSION}/tigervnc-${TIGERVNC_VERSION}.x86_64.tar.gz && \
     tar xzf /tmp/tigervnc.tar.gz -C /tmp && \
     chown root:root -R /tmp/tigervnc-${TIGERVNC_VERSION}.x86_64 && \
     tar c -C /tmp/tigervnc-${TIGERVNC_VERSION}.x86_64 usr | tar x -C / && \
@@ -71,10 +66,10 @@ RUN if [ "x$ALIYUN" != "xnone" ] ; then \
 # copy files
 COPY ./vnc-docker-root /
 
-EXPOSE 9000/tcp 9001/tcp 5901/tcp
+EXPOSE 9000/tcp 9001/tcp 5911/tcp
 
-ENTRYPOINT ["/init.entrypoint"]
-# ENTRYPOINT ["/sbin/entrypoint.sh"]
+ENTRYPOINT ["/sbin/entrypoint.sh"]
+
 CMD ["start"]
 
 # ENV NODE_VERSION v19.4.0
@@ -159,7 +154,7 @@ RUN npm install \
 
 # COPY --chown=user:user ./app /home/python-user/app
 COPY ./app /app/
-ADD ./lib/ ./tsconfig.json ./.npmrc /app/
+ADD ./tsconfig.json ./.npmrc /app/
 COPY vncmain.sh /app/vncmain.sh
 RUN chmod +x /app/vncmain.sh
 
