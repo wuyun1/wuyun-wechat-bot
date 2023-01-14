@@ -1,11 +1,11 @@
-deb http://mirrors.aliyun.com/debian/ bullseye main non-free contrib
-deb-src http://mirrors.aliyun.com/debian/ bullseye main non-free contrib
-deb http://mirrors.aliyun.com/debian-security/ bullseye-security main
-deb-src http://mirrors.aliyun.com/debian-security/ bullseye-security main
-deb http://mirrors.aliyun.com/debian/ bullseye-updates main non-free contrib
-deb-src http://mirrors.aliyun.com/debian/ bullseye-updates main non-free contrib
-deb http://mirrors.aliyun.com/debian/ bullseye-backports main non-free contrib
-deb-src http://mirrors.aliyun.com/debian/ bullseye-backports main non-free contrib
+deb http://ftp.sjtu.edu.cn/debian/ bullseye main non-free contrib
+deb-src http://ftp.sjtu.edu.cn/debian/ bullseye main non-free contrib
+deb http://ftp.sjtu.edu.cn/debian-security/ bullseye-security main
+deb-src http://ftp.sjtu.edu.cn/debian-security/ bullseye-security main
+deb http://ftp.sjtu.edu.cn/debian/ bullseye-updates main non-free contrib
+deb-src http://ftp.sjtu.edu.cn/debian/ bullseye-updates main non-free contrib
+deb http://ftp.sjtu.edu.cn/debian/ bullseye-backports main non-free contrib
+deb-src http://ftp.sjtu.edu.cn/debian/ bullseye-backports main non-free contrib
 
 
 # deb http://mirrors.163.com/debian/ buster main non-free contrib

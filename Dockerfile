@@ -4,6 +4,8 @@ FROM node:18-slim AS novnc-node-18
 
 ARG ALIYUN=""
 
+ADD ./check-valid-until.txt /etc/apt/apt.conf.d/10no--check-valid-until
+
 ADD ./sources.list /tmp/sources.list.1
 
 RUN if [ "x$ALIYUN" != "xnone" ] ; then mv -f /tmp/sources.list.1 /etc/apt/sources.list ; else rm -rf /tmp/sources.list.1 ; fi
