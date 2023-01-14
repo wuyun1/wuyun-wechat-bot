@@ -58,9 +58,9 @@ RUN if [ "x$ALIYUN" != "xnone" ] ; then \
     tar c -C /tmp/tigervnc-${TIGERVNC_VERSION}.x86_64 usr | tar x -C / && \
     locale-gen en_US.UTF-8 && \
     # novnc
-    mkdir -p /app/src && \
-    git clone --depth=1 https://github.com/novnc/noVNC.git /app/src/novnc && \
-    git clone --depth=1 https://github.com/novnc/websockify.git /app/src/websockify
+    mkdir -p /_app/src && \
+    git clone --depth=1 https://github.com/novnc/noVNC.git /_app/src/novnc && \
+    git clone --depth=1 https://github.com/novnc/websockify.git /_app/src/websockify
 
 
 # copy files
@@ -135,12 +135,11 @@ EXPOSE 8000
 WORKDIR /app
 
 
-ADD package.json package-lock.json .npmrc /app/
+ADD package.json /app/
 
 ADD .npmrc /tmp/.npmrc2
 
 RUN if [ "x$ALIYUN" != "xnone" ] ; then mv -f /tmp/.npmrc2 /app/.npmrc; else rm -rf  /tmp/.npmrc2; fi
-
 
 RUN npm install \
      && npm run puppet-install
@@ -154,7 +153,7 @@ RUN npm install \
 
 # COPY --chown=user:user ./app /home/python-user/app
 COPY ./app /app/
-ADD ./tsconfig.json ./.npmrc /app/
+ADD ./tsconfig.json /app/
 COPY vncmain.sh /app/vncmain.sh
 RUN chmod +x /app/vncmain.sh
 
