@@ -24,7 +24,8 @@ ENV LANG=en_US.UTF-8 \
 ENV S6_OVERLAY_VERSION=3.1.2.1
 
 # 首先加用户，防止 uid/gid 不稳定
-RUN groupadd user && useradd -m -g user user && \
+RUN set -ex && \
+    groupadd user && useradd -m -g user user && \
     # 安装依赖和代码
     apt-get update && apt-get upgrade -y # && \
     apt-get install -y \
@@ -94,8 +95,8 @@ ENV PYENV_ROOT /home/python-user/.pyenv
 ENV PATH $PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
 
 # RUN echo $PATH && whoami && dfasd
-RUN apt-get update && apt-get upgrade -y \
-    && apt-get install -y -f \
+RUN apt-get update && apt-get upgrade -y && \
+    apt-get install -y -f \
       wget unzip curl git python3 python3-pip python3-tk
 
 # # Install pyenv
@@ -112,7 +113,11 @@ RUN apt-get update && apt-get upgrade -y \
 # COPY --chown=user:user ./requirements.txt /home/python-user/app/requirements.txt
 COPY ./requirements.txt /home/python-user/app/requirements.txt
 
-RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple --no-cache-dir --upgrade -r /home/python-user/app/requirements.txt
+RUN if [ "x$ALIYUN" != "xnone" ] ; then \
+      pip install -i https://pypi.tuna.tsinghua.edu.cn/simple --no-cache-dir --upgrade -r /home/python-user/app/requirements.txt; \
+    else \
+      pip install --no-cache-dir --upgrade -r /home/python-user/app/requirements.txt; \
+    fi
 
 # USER root
 
