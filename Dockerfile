@@ -165,7 +165,7 @@ RUN npm install \
 ADD ./app /app/app/
 ADD ./src /app/src
 ADD ./tsconfig.json /app/
-ADD ./tsconfig.json /app/
+ADD ./rollup.config.js /app/
 COPY vncmain.sh /app/vncmain.sh
 RUN chmod +x /app/vncmain.sh
 
