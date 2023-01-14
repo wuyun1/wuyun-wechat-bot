@@ -37,6 +37,7 @@ RUN set -ex && \
         ca-certificates wget locales \
         nginx sudo \
         tmux \
+        net-tools \
         xz-utils \
         # python-numpy \
         xorg openbox rxvt-unicode

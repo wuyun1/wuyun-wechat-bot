@@ -27,4 +27,5 @@
 
 
 # (cd /home/python-user/app && ls -lah)
-(cd /app && npm run dev2)
+# (cd /app && npm run dev2)
+(cd /app && /usr/local/bin/uvicorn main-api:app --host 0.0.0.0 --port 8000 --reload)
