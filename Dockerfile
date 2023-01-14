@@ -153,7 +153,7 @@ RUN npm install \
 
 
 # COPY --chown=user:user ./app /home/python-user/app
-COPY ./app /app/
+ADD ./app /app/app/
 ADD ./tsconfig.json /app/
 COPY vncmain.sh /app/vncmain.sh
 RUN chmod +x /app/vncmain.sh

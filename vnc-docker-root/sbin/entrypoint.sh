@@ -48,7 +48,7 @@ case ${1} in
     sleep 2
     tmux capture-pane -t nginx -peN
     tmux new -d -s websocketify
-    tmux send-keys -t websocketify "sudo -Hu user /app/src/websockify/run 9001 127.0.0.1:5911" C-m
+    tmux send-keys -t websocketify "sudo -Hu user /_app/src/websockify/run 9001 127.0.0.1:5911" C-m
     sleep 2
     tmux capture-pane -t websocketify -peN
     sudo --preserve-env -Hu user /app/vncmain.sh "$@"
