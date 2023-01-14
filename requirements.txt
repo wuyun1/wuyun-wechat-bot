@@ -3,7 +3,7 @@
 # lxml==4.7.1
 # numpy==1.21.4
 # opencv-python==4.5.4.60
-pdf2docx==0.5.2
+pdf2docx==0.5.6
 # PyMuPDF==1.19.3
 # python-docx==0.8.11
 # six==1.16.0
