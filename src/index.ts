@@ -50,6 +50,9 @@ async function onMessage(msg: MessageInterface) {
   // const alias = (await contact.alias()) || (await contact.name());
   // const isText = msg.type() === bot.Message.Type.Text;
 
+  if (msg.self()) {
+    return;
+  }
   if (msg.type() === types.Message.Attachment) {
     // console.log(`接到文件信息:`);
 
