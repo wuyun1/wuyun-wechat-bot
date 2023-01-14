@@ -39,10 +39,13 @@ case ${1} in
     echo "No help!"
     ;;
   start)
-    tmux new -d -s tigervnc
-    tmux send-keys -t tigervnc "/usr/sbin/vncsession user :11" C-m
-    sleep 2
-    tmux capture-pane -t tigervnc -peN
+    vncsession user :11
+    # tmux new -d -s tigervnc
+    # tmux send-keys -t tigervnc "vncsession user :11" C-m
+    # sleep 2
+    touch ~/.Xauthority
+    xauth add `sudo --preserve-env -Hu user xauth list $DISPLAY`
+    # tmux capture-pane -t tigervnc -peN
     tmux new -d -s nginx
     tmux send-keys -t nginx "nginx -g 'daemon off;'" C-m
     sleep 2

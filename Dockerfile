@@ -13,17 +13,19 @@ RUN if [ "x$ALIYUN" != "xnone" ] ; then mv -f /tmp/sources.list.1 /etc/apt/sourc
 # RUN apt update -y && apt install --reinstall ca-certificates -y
 
 # 各种环境变量
-ENV LANG=en_US.UTF-8 \
-    LC_ALL=en_US.UTF-8 \
+ENV LANG=zh_CN.UTF-8 \
+    LC_ALL=zh_CN.UTF-8 \
     S6_BEHAVIOUR_IF_STAGE2_FAILS=2 \
     S6_CMD_ARG0=/sbin/entrypoint.sh \
+    DEBIAN_FRONTEND=noninteractive \
+    CHROMIUM_FLAGS="--no-sandbox" \
     VNC_GEOMETRY=800x600 \
     VNC_PASSWD=MAX8char \
+    DISPLAY=:11 \
     USER_PASSWD=abc1234 \
-    DEBIAN_FRONTEND=noninteractive \
     GIT_SSL_NO_VERIFY=1 \
     TIGERVNC_VERSION=1.12.0 \
-    LANGUAGE=en_US.UTF-8
+    LANGUAGE=zh_CN.UTF-8
 
 # 首先加用户，防止 uid/gid 不稳定
 RUN set -ex && \
@@ -35,8 +37,10 @@ RUN set -ex && \
         curl \
         # tightvncserver \
         ca-certificates wget locales \
+        procps \
         nginx sudo \
         tmux \
+        libnss3-dev \
         net-tools \
         xz-utils \
         # python-numpy \
@@ -45,6 +49,9 @@ RUN set -ex && \
     # apt-get autoremove -y && \
     # apt-get clean && \
     # rm -fr /tmp/* /app/src/novnc/.git /app/src/websockify/.git /var/lib/apt/lists
+
+RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -O /tmp/google-chrome-stable_current_amd64.deb && \
+  apt-get install -y /tmp/google-chrome-stable_current_amd64.deb
 
 RUN if [ "x$ALIYUN" != "xnone" ] ; then \
       export HTTP_GIT_PREFIX="https://github.91chi.fun/" && \
@@ -57,7 +64,9 @@ RUN if [ "x$ALIYUN" != "xnone" ] ; then \
     tar xzf /tmp/tigervnc.tar.gz -C /tmp && \
     chown root:root -R /tmp/tigervnc-${TIGERVNC_VERSION}.x86_64 && \
     tar c -C /tmp/tigervnc-${TIGERVNC_VERSION}.x86_64 usr | tar x -C / && \
-    locale-gen en_US.UTF-8 && \
+    locale-gen --purge zh_CN.UTF-8 && \
+    update-locale "zh_CN.UTF-8" && \
+    dpkg-reconfigure --frontend noninteractive locales && \
     # novnc
     mkdir -p /_app/src && \
     git clone --depth=1 https://github.com/novnc/noVNC.git /_app/src/novnc && \
@@ -154,6 +163,8 @@ RUN npm install \
 
 # COPY --chown=user:user ./app /home/python-user/app
 ADD ./app /app/app/
+ADD ./src /app/src
+ADD ./tsconfig.json /app/
 ADD ./tsconfig.json /app/
 COPY vncmain.sh /app/vncmain.sh
 RUN chmod +x /app/vncmain.sh

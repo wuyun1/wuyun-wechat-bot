@@ -7,4 +7,4 @@ vncconfig -nowin &
 $SHELL -l <<EOF
 exec /etc/X11/Xsession "$@"
 EOF
-vncserver -kill $DISPLAY
+# vncserver -kill $DISPLAY

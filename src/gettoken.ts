@@ -64,7 +64,7 @@ const doLogin = async (command: any): Promise<any> => {
   console.log('正在跳转到浏览器, 请在浏览器完成登录...');
   const browser = await puppeteer.launch({
     headless: false,
-    args: ['--proxy-server=socks5://127.0.0.1:7890'],
+    args: ['--no-sandbox'],
     // args: ['--proxy-server=socks5://127.0.0.1:1080'],
     // args: ['--proxy-server=http://127.0.0.1:1081'],
   });
