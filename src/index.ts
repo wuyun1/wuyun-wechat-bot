@@ -3,42 +3,18 @@ import { WechatyBuilder, types } from 'wechaty';
 import qrcodeTerminal from 'qrcode-terminal';
 import config from './config';
 // import config2 from './aaa.json';
-import { MessageInterface } from 'wechaty/impls';
-// import { loginChatGpt, replyMessage } from './chatgpt';
+import { MessageInterface, WechatyInterface } from 'wechaty/impls';
+import { loginChatGpt, replyMessage } from './chatgpt';
 import { FileBox } from 'file-box';
 import { existsSync, unlinkSync } from 'fs';
 import { pdfToWord } from './utils';
 
-// console.log(config2);
-
-// const config = {
-//   // 填入你的session token
-//   // chatGPTSessionToken: '',
-//   // clearanceToken: '',
-//   // userAgent: '',
-//   // 设置获取消息的重试次数
-//   retryTimes: 3,
-//   // 在群组中设置唤醒微信机器人的关键词
-//   groupKey: '',
-//   // 在私聊中设置唤醒微信机器人的关键词
-//   privateKey: '',
-//   // 重置上下文的关键词，如可设置为reset
-//   resetKey: 'reset',
-//   // 开启会后收到ChatGPT的自动回复
-//   autoReply: true,
-//   // 根据正则匹配是否自动通过好友验证
-//   friendShipRule: /chatgpt|chat/,
-//   // 是否在群聊中按照回复的格式进行回复
-//   groupReplyMode: true,
-//   // 是否在私聊中按照回复的格式进行回复
-//   privateReplyMode: false,
-// };
-
-// const replyMessage = (...args) => {
-//   console.log(args);
-// };
+let bot: WechatyInterface | null = null;
 
 async function onMessage(msg: MessageInterface) {
+  if (!bot) {
+    return;
+  }
   // console.log(msg);
   // return;
 
@@ -50,9 +26,33 @@ async function onMessage(msg: MessageInterface) {
   // const alias = (await contact.alias()) || (await contact.name());
   // const isText = msg.type() === bot.Message.Type.Text;
 
-  if (msg.self()) {
+  const isText = msg.type() === types.Message.Text;
+
+  if (msg.self() && isText) {
+    const content = msg.text().trim();
+
+    if (content === 'reloadCache') {
+      try {
+        await loginChatGpt({ reloadCache: true });
+        await msg.say('重载 token 成功.');
+      } catch (e: any) {
+        await msg.say(`登录失败. ${e.message || e}`);
+      }
+    }
+
+    if (content === 'reLogin') {
+      try {
+        await msg.say('正在登录.');
+        await loginChatGpt({ force: true });
+        await msg.say('登录成功.');
+      } catch (e: any) {
+        await msg.say(`登录失败. ${e.message || e}`);
+      }
+    }
+
     return;
   }
+
   if (msg.type() === types.Message.Attachment) {
     // console.log(`接到文件信息:`);
 
@@ -130,57 +130,51 @@ async function onMessage(msg: MessageInterface) {
     // }
     return;
   }
-  // console.log(msg.id);
-  return;
 
-  // const contact = msg.talker();
-  // const contactId = contact.id;
-  // const receiver = msg.to();
-  // const content = msg.text().trim();
-  // const room = msg.room();
-  // const alias = (await contact.alias()) || (await contact.name());
-  // const isText = msg.type() === bot.Message.Type.Text;
-  // if (msg.self()) {
-  //   return;
-  // }
+  const contact = msg.talker();
+  const contactId = contact.id;
+  const receiver = msg.listener();
+  const room = msg.room();
+  const alias = (await contact.alias()) || (await contact.name());
+  if (isText) {
+    const content = msg.text().trim();
+    if (room) {
+      const topic = await room.topic();
+      console.log(
+        `Group name: ${topic} talker: ${await contact.name()} content: ${content}`
+      );
 
-  // if (room && isText) {
-  //   const topic = await room.topic();
-  //   console.log(
-  //     `Group name: ${topic} talker: ${await contact.name()} content: ${content}`
-  //   );
-
-  //   const pattern = RegExp(`^@${receiver.name()}\\s+${config.groupKey}[\\s]*`);
-  //   if (await msg.mentionSelf()) {
-  //     if (pattern.test(content)) {
-  //       const groupContent = content.replace(pattern, '');
-  //       replyMessage(room, groupContent, contactId);
-  //       return;
-  //     } else {
-  //       console.log(
-  //         'Content is not within the scope of the customizition format'
-  //       );
-  //     }
-  //   }
-  // } else if (msg.type() === types.Message.Attachment) {
-  //   console.log(`接到文件信息:`);
-  //   console.log(msg);
-  // } else if (isText) {
-  //   console.log(`talker: ${alias} content: ${content}`);
-  //   if (config.autoReply) {
-  //     if (content.startsWith(config.privateKey)) {
-  //       replyMessage(
-  //         contact,
-  //         content.substring(config.privateKey.length).trim(),
-  //         contactId
-  //       );
-  //     } else {
-  //       console.log(
-  //         'Content is not within the scope of the customizition format'
-  //       );
-  //     }
-  //   }
-  // }
+      const pattern = RegExp(
+        `^@${receiver?.name()}\\s+${config.groupKey}[\\s]*`
+      );
+      if (await msg.mentionSelf()) {
+        if (pattern.test(content)) {
+          const groupContent = content.replace(pattern, '');
+          replyMessage(room, groupContent, contactId);
+          return;
+        } else {
+          console.log(
+            'Content is not within the scope of the customizition format'
+          );
+        }
+      }
+    } else {
+      console.log(`talker: ${alias} content: ${content}`);
+      if (config.autoReply) {
+        if (content.startsWith(config.privateKey)) {
+          replyMessage(
+            contact,
+            content.substring(config.privateKey.length).trim(),
+            contactId
+          );
+        } else {
+          console.log(
+            'Content is not within the scope of the customizition format'
+          );
+        }
+      }
+    }
+  }
 }
 
 function onScan(qrcode) {
@@ -218,7 +212,7 @@ async function onFriendShip(friendship) {
   // loginChatGpt();
 
   // return;
-  const bot = WechatyBuilder.build({
+  bot = WechatyBuilder.build({
     name: 'WechatEveryDay2',
     // puppet: 'wechaty-puppet-wechat4u', // 如果有token，记得更换对应的puppet
     puppet: 'wechaty-puppet-wechat', // 如果有token，记得更换对应的puppet

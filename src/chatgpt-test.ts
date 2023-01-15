@@ -1,4 +1,4 @@
-import { ChatGPTAPIBrowser } from 'chatgpt';
+// import { ChatGPTAPIBrowser } from 'chatgpt';
 
 // const api = new ChatGPTAPIBrowser({
 //   email: process.env.OPENAI_EMAIL || 'jajabjbj@gmail.com',
@@ -16,7 +16,7 @@ import { ChatGPTAPIBrowser } from 'chatgpt';
 
 import { loginChatGpt } from './chatgpt';
 
-const api = await loginChatGpt(true);
+const api = await loginChatGpt({ force: true });
 
 // await api.initSession();
 

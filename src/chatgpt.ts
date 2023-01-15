@@ -112,40 +112,74 @@ async function getChatGPTReply(content, contactId) {
   return response;
 }
 
-export const loginChatGpt = async (force = false) => {
-  if (!chatGPT) {
-    let cacheData: OpenAIAuth | null = await getCache();
-    if (force || !cacheData) {
-      cacheData = await getOpenAIAuth({
-        email: config.email,
-        password: config.password,
-        // proxyServer: 'http://127.0.0.1:1081',
-        // proxyServer: 'socks5://127.0.0.1:1080',
-        // proxyServer: 'socks5://127.0.0.1:1080',
+let isLogining = false;
+
+export const loginChatGpt = async ({
+  force = false,
+  reloadCache = false,
+}: {
+  force?: boolean;
+  reloadCache?: boolean;
+} = {}) => {
+  if (isLogining) {
+    throw new Error('当前正在登录');
+  }
+  try {
+    isLogining = true;
+    if (!chatGPT) {
+      let cacheData: OpenAIAuth | null = await getCache();
+      if (reloadCache && !cacheData) {
+        throw new Error('当前目录下不存在 chatGPT token');
+      }
+      if (force || !cacheData) {
+        cacheData = await getOpenAIAuth({
+          email: config.email,
+          password: config.password,
+          // proxyServer: 'http://127.0.0.1:1081',
+          // proxyServer: 'socks5://127.0.0.1:1080',
+          // proxyServer: 'socks5://127.0.0.1:1080',
+          // proxyServer: 'socks5://127.0.0.1:7890',
+          // https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890
+        });
+      }
+
+      chatGPT = new ChatGPTAPI({
+        ...cacheData,
         // proxyServer: 'socks5://127.0.0.1:7890',
-        // https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890
+        // sessionToken: config.chatGPTSessionToken,
+        // clearanceToken: config.clearanceToken,
+        // userAgent: config.userAgent,
+      });
+
+      if (!(await chatGPT.getIsAuthenticated())) {
+        setCache(null);
+        throw new Error('chatGPT token 无效');
+        // chatGPT = undefined;
+        // return;
+      }
+
+      setCache(cacheData);
+    } else if (reloadCache) {
+      const cacheData: OpenAIAuth | null = await getCache();
+      if (!cacheData) {
+        throw new Error('当前目录下不存在 chatGPT token');
+      }
+      chatGPT = new ChatGPTAPI({
+        ...cacheData,
+        // proxyServer: 'socks5://127.0.0.1:7890',
+        // sessionToken: config.chatGPTSessionToken,
+        // clearanceToken: config.clearanceToken,
+        // userAgent: config.userAgent,
       });
     }
-
-    chatGPT = new ChatGPTAPI({
-      ...cacheData,
-      // proxyServer: 'socks5://127.0.0.1:7890',
-      // sessionToken: config.chatGPTSessionToken,
-      // clearanceToken: config.clearanceToken,
-      // userAgent: config.userAgent,
-    });
-
-    if (!(await chatGPT.getIsAuthenticated())) {
-      setCache(null);
-      throw new Error('chatGPT token 无效');
-      // chatGPT = undefined;
-      // return;
-    }
-
-    setCache(cacheData);
+    return chatGPT;
+  } catch (e) {
+    chatGPT = undefined;
+    console.log(e);
+    throw e;
+  } finally {
+    isLogining = false;
   }
-
-  return chatGPT;
 };
 
 export async function replyMessage(contact, content, contactId) {
