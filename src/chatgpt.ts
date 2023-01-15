@@ -139,8 +139,19 @@ function getConversationFromOpenAi(contactId: string) {
 
   let sequences: Sequence[] = [];
 
+  let timeoutId: any = null;
+
   const conversation = {
     sendMessage: async (content: string) => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+
+      timeoutId = setTimeout(() => {
+        sequences = [];
+      }, 60 * 60 * 1000);
+
       try {
         const _openAi = loginOpenAi();
         if (!_openAi) {
@@ -154,7 +165,17 @@ function getConversationFromOpenAi(contactId: string) {
         });
 
         let prompt = sequences
-          .map((item) => `${item.type}: ${item.content}`)
+          .map((item) => {
+            let endC = '';
+            if (item.type === 'Q') {
+              if (
+                !(item.content.endsWith('?') || item.content.endsWith('？'))
+              ) {
+                endC = '?';
+              }
+            }
+            return `${item.type}: ${item.content}${endC}`;
+          })
           .join('\n\n');
 
         if (prompt.length > 2000 && sequences.length > 4) {
@@ -166,7 +187,7 @@ function getConversationFromOpenAi(contactId: string) {
 
         const args = {
           model: 'text-davinci-003',
-          prompt: prompt,
+          prompt: `I want you to reply to all my questions in markdown format. \n\n${prompt}\n\nA: `,
           temperature: 0,
           max_tokens: 1000,
           top_p: 1,
