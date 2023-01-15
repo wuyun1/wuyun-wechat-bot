@@ -174,3 +174,5 @@ RUN chmod +x /app/vncmain.sh
 # docker build . -t wechatbot:latest
 # docker build . -t wechatbot:latest --build-arg ALIYUN=none
 # docker run -ti --name vnc-test --env-file .env -p 3000:3000 -p 8000:8000  --rm oott123/novnc:latest bash
+# docker run -ti --name vnc-test --env-file .env -p 9000:9000 --rm docker.io/library/wechatbot:latest
+# docker run -ti --name vnc-test --env-file .env -p 9000:9000 --rm localhost/wechatbot:latest

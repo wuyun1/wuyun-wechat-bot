@@ -42,7 +42,7 @@ case ${1} in
     vncsession user :11
     # tmux new -d -s tigervnc
     # tmux send-keys -t tigervnc "vncsession user :11" C-m
-    # sleep 2
+    sleep 2
     touch ~/.Xauthority
     xauth add `sudo --preserve-env -Hu user xauth list $DISPLAY`
     # tmux capture-pane -t tigervnc -peN
@@ -64,6 +64,7 @@ esac
 # tmux new -d -s nginx
 # tmux send-keys -t nginx "sleep 500 && sleep 500" C-m
 
+tmux list-sessions | awk 'BEGIN{FS=":"}{print $1}' | xargs -I {} tmux send-keys -t {} C-c C-d || echo No sessions to kill
 tmux list-sessions | awk 'BEGIN{FS=":"}{print $1}' | xargs -I {} tmux send-keys -t {} C-c C-d || echo No sessions to kill
 tmux list-sessions | awk 'BEGIN{FS=":"}{print $1}' | xargs -I {} tmux wait-for {} || echo No sessions to wait-for
 
