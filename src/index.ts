@@ -4,7 +4,7 @@ import qrcodeTerminal from 'qrcode-terminal';
 import config from './config';
 // import config2 from './aaa.json';
 import { MessageInterface, WechatyInterface } from 'wechaty/impls';
-import { loginChatGpt, replyMessage } from './chatgpt';
+import { loginChatGpt, loginOpenAi, replyMessage } from './chatgpt';
 import { FileBox } from 'file-box';
 import { existsSync, unlinkSync } from 'fs';
 import { pdfToWord } from './utils';
@@ -31,16 +31,17 @@ async function onMessage(msg: MessageInterface) {
   if (msg.self() && isText) {
     const content = msg.text().trim();
 
-    if (content === 'reloadCache') {
+    if (content.toLowerCase() === 'reloadCache'.toLowerCase()) {
       try {
         await loginChatGpt({ reloadCache: true });
         await msg.say('重载 token 成功.');
       } catch (e: any) {
         await msg.say(`登录失败. ${e.message || e}`);
       }
+      return;
     }
 
-    if (content === 'reLogin') {
+    if (content.toLowerCase() === 'reLogin'.toLowerCase()) {
       try {
         await msg.say('正在登录.');
         await loginChatGpt({ force: true });
@@ -48,6 +49,22 @@ async function onMessage(msg: MessageInterface) {
       } catch (e: any) {
         await msg.say(`登录失败. ${e.message || e}`);
       }
+      return;
+    }
+
+    if (content.toLowerCase() === 'cleanOpenAiApiKey'.toLowerCase()) {
+      loginOpenAi(null);
+      await msg.say(`清除 OpenAiApiKey 成功`);
+      return;
+    }
+
+    if (content.toLowerCase().startsWith('setOpenAiApiKey'.toLowerCase())) {
+      const key = content.replace(new RegExp('setOpenAiApiKey', 'i'), '');
+      if (key) {
+        loginOpenAi(key);
+        await msg.say(`设置 OpenAiApiKey 成功. ${key}`);
+      }
+      return;
     }
 
     return;

@@ -11,6 +11,7 @@ import {
   rmdirSync,
   writeFileSync,
 } from 'fs';
+import { Configuration, OpenAIApi } from 'openai';
 import pTimeout from 'p-timeout';
 import { join } from 'path';
 import config from './config';
@@ -18,6 +19,7 @@ import { retryRequest } from './utils';
 
 const conversationMap = new Map();
 
+let openAi: OpenAIApi | undefined = undefined;
 let chatGPT: ChatGPTAPI | undefined;
 
 function resetConversation(contactId: string) {
@@ -75,7 +77,6 @@ function getConversation(contactId: string) {
     sendMessage: async (content: string) => {
       if (!chatGPT) {
         throw new Error('chatGPT not login');
-        return;
       }
       try {
         const res = await chatGPT.sendMessage(content, {
@@ -83,7 +84,7 @@ function getConversation(contactId: string) {
         });
         if (!covId && res.conversationId) {
           covId = res.conversationId;
-          conversationMap.set(covId, conversation);
+          conversationMap.set(contactId, conversation);
         }
         return res;
       } catch (e) {
@@ -99,8 +100,121 @@ function getConversation(contactId: string) {
   return conversation;
 }
 
+export const loginOpenAi = (openAIKey?: string | null) => {
+  if (openAIKey === null) {
+    config.openApiKey = '';
+    openAi = undefined;
+    return;
+  }
+
+  if (!openAIKey && openAi) {
+    return openAi;
+  }
+
+  const _openApiKey = openAIKey || config.openApiKey;
+
+  if (!_openApiKey) {
+    return;
+  }
+
+  const configuration = new Configuration({
+    apiKey: openAIKey || config.openApiKey,
+  });
+  config.openApiKey = _openApiKey;
+  openAi = new OpenAIApi(configuration);
+  return openAi;
+};
+
+type Sequence = {
+  type: 'Q' | 'A';
+  content: string;
+};
+
+function getConversationFromOpenAi(contactId: string) {
+  if (conversationMap.has(contactId)) {
+    return conversationMap.get(contactId);
+  }
+
+  let covId: undefined | string = undefined;
+
+  let sequences: Sequence[] = [];
+
+  const conversation = {
+    sendMessage: async (content: string) => {
+      try {
+        const _openAi = loginOpenAi();
+        if (!_openAi) {
+          sequences = [];
+          return '没有设置 openAiKey!';
+        }
+
+        sequences.push({
+          type: 'Q',
+          content,
+        });
+
+        let prompt = sequences
+          .map((item) => `${item.type}: ${item.content}`)
+          .join('\n\n');
+
+        if (prompt.length > 2000 && sequences.length > 4) {
+          sequences = sequences.slice(2);
+          prompt = sequences
+            .map((item) => `${item.type}: ${item.content}`)
+            .join('\n\n');
+        }
+
+        const args = {
+          model: 'text-davinci-003',
+          prompt: prompt,
+          temperature: 0,
+          max_tokens: 1000,
+          top_p: 1,
+          // user: covId,
+          frequency_penalty: 0.0,
+          presence_penalty: 0.0,
+          // stop: ['\n'],
+        };
+
+        // console.log('args:', args);
+        const response2 = await _openAi.createCompletion({
+          ...args,
+          // stop: ['\n'],
+        });
+        // console.log('response2:\n');
+        // console.log(JSON.stringify(response2.data, null, 2));
+        // process.exit();
+        const aContent = response2.data.choices
+          .map((item) => item.text)
+          .join('\n')
+          .trim()
+          .replace(/^\s*[aA]:\s*/, '');
+
+        sequences.push({
+          type: 'A',
+          content: aContent,
+        });
+        if (!covId && response2.data.id) {
+          covId = response2.data.id;
+          conversationMap.set(contactId, conversation);
+        }
+
+        return aContent;
+      } catch (e) {
+        console.log(e);
+        throw e;
+      }
+    },
+  };
+  return conversation;
+}
+
 async function getChatGPTReply(content, contactId) {
-  const currentConversation = getConversation(contactId);
+  const getConversationFn = config.openApiKey
+    ? getConversationFromOpenAi
+    : getConversation;
+
+  const currentConversation = getConversationFn(contactId);
   // send a message and wait for the response
   const threeMinutesMs = 3 * 60 * 1000;
   const response = await pTimeout(currentConversation.sendMessage(content), {
@@ -183,10 +297,6 @@ export const loginChatGpt = async ({
 };
 
 export async function replyMessage(contact, content, contactId) {
-  if (!chatGPT) {
-    console.log('chatGPT 没有登录');
-    return;
-  }
   try {
     if (
       content.trim().toLocaleLowerCase() === config.resetKey.toLocaleLowerCase()
