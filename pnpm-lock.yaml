@@ -1,7 +1,7 @@
 lockfileVersion: 5.4
 
 overrides:
-  puppeteer: ^13.7.0
+  puppeteer: ^14
 
 specifiers:
   '@commitlint/cli': ^17.3.0
@@ -27,7 +27,7 @@ specifiers:
   lint-staged: ^13.1.0
   p-timeout: ^6.0.0
   prettier: ^2.8.1
-  puppeteer: ^13.7.0
+  puppeteer: ^14
   qrcode-terminal: ^0.12.0
   rimraf: ^3.0.2
   rollup: ^2.68.0
@@ -40,11 +40,11 @@ specifiers:
   wechaty-puppet-wechat: ^1.18.4
 
 dependencies:
-  chatgpt: 3.4.1_puppeteer@13.7.0
+  chatgpt: 3.4.1_puppeteer@14.4.1
   dotenv: 16.0.3
   file-box: 1.4.15
   p-timeout: 6.0.0
-  puppeteer: 13.7.0
+  puppeteer: 14.4.1
   qrcode-terminal: 0.12.0
   wechaty: 1.20.2
   wechaty-puppet-wechat: 1.18.4
@@ -318,7 +318,7 @@ packages:
     dependencies:
       debug: 4.3.4
       merge-deep: 3.0.3
-      puppeteer-extra: 3.3.4_puppeteer@13.7.0
+      puppeteer-extra: 3.3.4_puppeteer@14.4.1
       puppeteer-extra-plugin: 3.2.2_puppeteer-extra@3.3.4
     transitivePeerDependencies:
       - supports-color
@@ -1483,7 +1483,7 @@ packages:
     resolution: {integrity: sha512-yrLQ/yVUFXkzg7EDQsPieE/53+0RlaWTs+wBrvW36cyilJ2SaDWfl4Yj7MtLTXleV9uEKefbAGUPv2/iWSooRA==}
     dev: false
 
-  /chatgpt/3.4.1_puppeteer@13.7.0:
+  /chatgpt/3.4.1_puppeteer@14.4.1:
     resolution: {integrity: sha512-aCFJRvJI9+HhuDquNi6ZgTrM524imnmZVY9lyyDo0F9LYJgCrk/h3XVqbzKDREsDW0IG4jHWIm8Q7R90FCAJmA==}
     engines: {node: '>=18'}
     peerDependencies:
@@ -1494,8 +1494,8 @@ packages:
       expiry-map: 2.0.0
       html-to-md: 0.8.3
       p-timeout: 6.0.0
-      puppeteer: 13.7.0
-      puppeteer-extra: 3.3.4_puppeteer@13.7.0
+      puppeteer: 14.4.1
+      puppeteer-extra: 3.3.4_puppeteer@14.4.1
       puppeteer-extra-plugin-recaptcha: /@fisch0920/puppeteer-extra-plugin-recaptcha/3.6.6_puppeteer-extra@3.3.4
       puppeteer-extra-plugin-stealth: 2.11.1_puppeteer-extra@3.3.4
       random: 4.1.0
@@ -1954,8 +1954,8 @@ packages:
     engines: {node: '>=8'}
     dev: true
 
-  /devtools-protocol/0.0.981744:
-    resolution: {integrity: sha512-0cuGS8+jhR67Fy7qG3i3Pc7Aw494sb9yG9QgpG97SFVWwolgYjlhJg7n+UaHxOQT30d1TYu/EYe9k01ivLErIg==}
+  /devtools-protocol/0.0.1001819:
+    resolution: {integrity: sha512-G6OsIFnv/rDyxSqBa2lDLR6thp9oJioLsb2Gl+LbQlyoA9/OBAkrTU9jiCcQ8Pnh7z4d6slDiLaogR5hzgJLmQ==}
     dev: false
 
   /didyoumean/1.2.2:
@@ -4357,7 +4357,7 @@ packages:
         optional: true
     dependencies:
       debug: 4.3.4
-      puppeteer-extra: 3.3.4_puppeteer@13.7.0
+      puppeteer-extra: 3.3.4_puppeteer@14.4.1
       puppeteer-extra-plugin: 3.2.2_puppeteer-extra@3.3.4
       puppeteer-extra-plugin-user-preferences: 2.4.0_puppeteer-extra@3.3.4
     transitivePeerDependencies:
@@ -4378,7 +4378,7 @@ packages:
     dependencies:
       debug: 4.3.4
       fs-extra: 10.1.0
-      puppeteer-extra: 3.3.4_puppeteer@13.7.0
+      puppeteer-extra: 3.3.4_puppeteer@14.4.1
       puppeteer-extra-plugin: 3.2.2_puppeteer-extra@3.3.4
       rimraf: 3.0.2
     transitivePeerDependencies:
@@ -4399,7 +4399,7 @@ packages:
     dependencies:
       debug: 4.3.4
       deepmerge: 4.2.2
-      puppeteer-extra: 3.3.4_puppeteer@13.7.0
+      puppeteer-extra: 3.3.4_puppeteer@14.4.1
       puppeteer-extra-plugin: 3.2.2_puppeteer-extra@3.3.4
       puppeteer-extra-plugin-user-data-dir: 2.4.0_puppeteer-extra@3.3.4
     transitivePeerDependencies:
@@ -4421,12 +4421,12 @@ packages:
       '@types/debug': 4.1.7
       debug: 4.3.4
       merge-deep: 3.0.3
-      puppeteer-extra: 3.3.4_puppeteer@13.7.0
+      puppeteer-extra: 3.3.4_puppeteer@14.4.1
     transitivePeerDependencies:
       - supports-color
     dev: false
 
-  /puppeteer-extra/3.3.4_puppeteer@13.7.0:
+  /puppeteer-extra/3.3.4_puppeteer@14.4.1:
     resolution: {integrity: sha512-fN5pHvSMJ8d1o7Z8wLLTQOUBpORD2BcFn+KDs7QnkGZs9SV69hcUcce67vX4L4bNSEG3A0P6Osrv+vWNhhdm8w==}
     engines: {node: '>=8'}
     peerDependencies:
@@ -4444,20 +4444,20 @@ packages:
       '@types/debug': 4.1.7
       debug: 4.3.4
       deepmerge: 4.2.2
-      puppeteer: 13.7.0
+      puppeteer: 14.4.1
     transitivePeerDependencies:
       - supports-color
     dev: false
 
-  /puppeteer/13.7.0:
-    resolution: {integrity: sha512-U1uufzBjz3+PkpCxFrWzh4OrMIdIb2ztzCu0YEPfRHjHswcSwHZswnK+WdsOQJsRV8WeTg3jLhJR4D867+fjsA==}
-    engines: {node: '>=10.18.1'}
+  /puppeteer/14.4.1:
+    resolution: {integrity: sha512-+H0Gm84aXUvSLdSiDROtLlOofftClgw2TdceMvvCU9UvMryappoeS3+eOLfKvoy4sm8B8MWnYmPhWxVFudAOFQ==}
+    engines: {node: '>=14.1.0'}
     deprecated: < 18.1.0 is no longer supported
     requiresBuild: true
     dependencies:
       cross-fetch: 3.1.5
       debug: 4.3.4
-      devtools-protocol: 0.0.981744
+      devtools-protocol: 0.0.1001819
       extract-zip: 2.0.1
       https-proxy-agent: 5.0.1
       pkg-dir: 4.2.0
@@ -4466,7 +4466,7 @@ packages:
       rimraf: 3.0.2
       tar-fs: 2.1.1
       unbzip2-stream: 1.4.3
-      ws: 8.5.0
+      ws: 8.7.0
     transitivePeerDependencies:
       - bufferutil
       - encoding
@@ -5508,8 +5508,8 @@ packages:
       cockatiel: 2.0.2
       md5: 2.3.0
       mime: 3.0.0
-      puppeteer: 13.7.0
-      puppeteer-extra: 3.3.4_puppeteer@13.7.0
+      puppeteer: 14.4.1
+      puppeteer-extra: 3.3.4_puppeteer@14.4.1
       puppeteer-extra-plugin-stealth: 2.11.1_puppeteer-extra@3.3.4
       qr-image: 3.2.0
       request: 2.88.2
@@ -5698,8 +5698,8 @@ packages:
         optional: true
     dev: false
 
-  /ws/8.5.0:
-    resolution: {integrity: sha512-BWX0SWVgLPzYwF8lTzEy1egjhS4S4OEAHfsO8o65WOVsrnSRGaSiUaa9e0ggGlkMTtBlmOpEXiie9RUcBO86qg==}
+  /ws/8.7.0:
+    resolution: {integrity: sha512-c2gsP0PRwcLFzUiA8Mkr37/MI7ilIlHQxaEAtd0uNMbVMoy8puJyafRlm0bV9MbGSabUPeLrRRaqIBcFcA2Pqg==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
