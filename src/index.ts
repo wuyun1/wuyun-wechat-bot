@@ -6,7 +6,7 @@ import config from './config';
 import { MessageInterface } from 'wechaty/impls';
 // import { loginChatGpt, replyMessage } from './chatgpt';
 import { FileBox } from 'file-box';
-import { unlinkSync } from 'fs';
+import { existsSync, unlinkSync } from 'fs';
 import { pdfToWord } from './utils';
 
 // console.log(config2);
@@ -94,9 +94,19 @@ async function onMessage(msg: MessageInterface) {
 
     await fileBox.toFile(pdfFilePath, true);
 
-    await msg.say(`正在转换 ${pdfFileName} 到 ${pdfFileName}.docx ...`);
+    await msg.say(`正在转换 ${pdfFileName} 到 ${pdfFileName}.docx`);
 
-    await pdfToWord(pdfFilePath, wordFilePath);
+    const logs = await pdfToWord(pdfFilePath, wordFilePath);
+
+    if (!existsSync(wordFilePath)) {
+      unlinkSync(pdfFilePath);
+
+      await msg.say(`pdf 转换失败： ${logs.stderr.toString('utf-8')}`);
+
+      return;
+    }
+
+    console.log(logs.stdout.toString('utf8'));
 
     const sendName = pdfFileName.length > 10 ? id : pdfFileName;
 
@@ -209,12 +219,19 @@ async function onFriendShip(friendship) {
 
   // return;
   const bot = WechatyBuilder.build({
-    name: 'WechatEveryDay',
+    name: 'WechatEveryDay2',
+    // puppet: 'wechaty-puppet-wechat4u', // 如果有token，记得更换对应的puppet
     puppet: 'wechaty-puppet-wechat', // 如果有token，记得更换对应的puppet
     puppetOptions: {
       uos: true,
+      launchOptions: {
+        // executablePath: executablePath(),
+        // // headless: false,
+        // ... others launchOptions, see: https://github.com/GoogleChrome/puppeteer/blob/v1.18.1/docs/api.md#puppeteerlaunchoptions
+      },
+      // endpoint: defaultChromeExecutablePath(),
       // endpoint:
-      //   '/Users/wuyun/.cache/puppeteer/chrome/mac-1069273/chrome-mac/Chromium.app/Contents/MacOS/Chromium',
+      //   '/Users/wuyun/.cache/puppeteer/chrome/mac-1069273/chrome-mac/Chromium.app/Contents/MacOS/Chromium --no-sandbox',
     },
   });
 

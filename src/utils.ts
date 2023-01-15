@@ -43,5 +43,5 @@ export const retryRequest = async <T>(
 };
 
 export const pdfToWord = async (pdfFilePath: string, wordFilePath: string) => {
-  spawnSync(`python3`, ['./app/main.py', pdfFilePath, wordFilePath]);
+  return spawnSync(`python3`, ['./app/main.py', pdfFilePath, wordFilePath]);
 };
