@@ -18,43 +18,52 @@ async function onMessage(msg: MessageInterface) {
   // console.log(msg);
   // return;
 
-  // const contact = msg.talker();
-  // const contactId = contact.id;
+  const contact = msg.talker();
+  const contactId = contact.id;
   // const receiver = msg.to();
   // const content = msg.text().trim();
   // const room = msg.room();
-  // const alias = (await contact.alias()) || (await contact.name());
+  const _alias = await contact.alias();
   // const isText = msg.type() === bot.Message.Type.Text;
 
   const isText = msg.type() === types.Message.Text;
 
-  if (msg.self() && isText) {
+  if ((msg.self() || _alias === config.adminWxAliasName) && isText) {
     const content = msg.text().trim();
+
+    const adminUser = await bot.Contact.find({
+      alias: config.adminWxAliasName,
+    });
+
+    if (!adminUser) {
+      console.log(`管理员 wx alias name 不存在: ${config.adminWxAliasName}`);
+      return;
+    }
 
     if (content.toLowerCase() === 'reloadCache'.toLowerCase()) {
       try {
         await loginChatGpt({ reloadCache: true });
-        await msg.say('重载 token 成功.');
+        await adminUser.say('重载 token 成功.');
       } catch (e: any) {
-        await msg.say(`登录失败. ${e.message || e}`);
+        await adminUser.say(`登录失败. ${e.message || e}`);
       }
       return;
     }
 
     if (content.toLowerCase() === 'reLogin'.toLowerCase()) {
       try {
-        await msg.say('正在登录.');
+        await adminUser.say('正在登录.');
         await loginChatGpt({ force: true });
-        await msg.say('登录成功.');
+        await adminUser.say('登录成功.');
       } catch (e: any) {
-        await msg.say(`登录失败. ${e.message || e}`);
+        await adminUser.say(`登录失败. ${e.message || e}`);
       }
       return;
     }
 
     if (content.toLowerCase() === 'cleanOpenAiApiKey'.toLowerCase()) {
       loginOpenAi(null);
-      await msg.say(`清除 OpenAiApiKey 成功`);
+      await adminUser.say(`清除 OpenAiApiKey 成功`);
       return;
     }
 
@@ -62,12 +71,15 @@ async function onMessage(msg: MessageInterface) {
       const key = content.replace(new RegExp('setOpenAiApiKey', 'i'), '');
       if (key) {
         loginOpenAi(key);
-        await msg.say(`设置 OpenAiApiKey 成功. ${key}`);
+        const _msg = `设置 OpenAiApiKey 成功. ${key}`;
+        await adminUser.say(_msg);
       }
       return;
     }
 
-    return;
+    if (msg.self()) {
+      return;
+    }
   }
 
   if (msg.type() === types.Message.Attachment) {
@@ -80,7 +92,7 @@ async function onMessage(msg: MessageInterface) {
     const pdfFileName = fileBox.name;
 
     if (!pdfFileName.endsWith('.pdf')) {
-      await msg.say(`pdf 转 word: 请发送 pdf 文件给我`);
+      // await msg.say(`pdf 转 word: 请发送 pdf 文件给我`);
       return;
     }
 
@@ -148,11 +160,9 @@ async function onMessage(msg: MessageInterface) {
     return;
   }
 
-  const contact = msg.talker();
-  const contactId = contact.id;
   const receiver = msg.listener();
   const room = msg.room();
-  const alias = (await contact.alias()) || (await contact.name());
+  const alias = _alias || (await contact.name());
   if (isText) {
     const content = msg.text().trim();
     if (room) {

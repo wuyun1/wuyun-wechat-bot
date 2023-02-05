@@ -141,6 +141,25 @@ function getConversationFromOpenAi(contactId: string) {
 
   let timeoutId: any = null;
 
+  const getPrompt = (_sequences: any[]) => {
+    const map = {
+      Q: '人',
+      A: 'AI',
+    };
+    return _sequences
+      .map((item) => {
+        // let endC = '';
+        // if (item.type === 'Q') {
+        //   if (!(item.content.endsWith('?') || item.content.endsWith('？'))) {
+        //     endC = '?';
+        //   }
+        // }
+        // return `${map[item.type] || item.type}: ${item.content}${endC}`;
+        return `${map[item.type] || item.type}: ${item.content}`;
+      })
+      .join('\n\n');
+  };
+
   const conversation = {
     sendMessage: async (content: string) => {
       if (timeoutId) {
@@ -150,7 +169,7 @@ function getConversationFromOpenAi(contactId: string) {
 
       timeoutId = setTimeout(() => {
         sequences = [];
-      }, 60 * 60 * 1000);
+      }, 5 * 60 * 1000);
 
       try {
         const _openAi = loginOpenAi();
@@ -164,31 +183,17 @@ function getConversationFromOpenAi(contactId: string) {
           content,
         });
 
-        let prompt = sequences
-          .map((item) => {
-            let endC = '';
-            if (item.type === 'Q') {
-              if (
-                !(item.content.endsWith('?') || item.content.endsWith('？'))
-              ) {
-                endC = '?';
-              }
-            }
-            return `${item.type}: ${item.content}${endC}`;
-          })
-          .join('\n\n');
+        let prompt = getPrompt(sequences);
 
-        if (prompt.length > 2000 && sequences.length > 4) {
+        while (prompt.length > 2000) {
           sequences = sequences.slice(2);
-          prompt = sequences
-            .map((item) => `${item.type}: ${item.content}`)
-            .join('\n\n');
+          prompt = getPrompt(sequences);
         }
-
+        const resPrompt = `请用 markdown 格式补充下面对话: \n${prompt}\n\nAI:`;
         const args = {
           model: 'text-davinci-003',
-          prompt: `I want you to reply to all my questions in markdown format. \n\n${prompt}\n\nA: `,
-          temperature: 0,
+          prompt: resPrompt,
+          temperature: 0.5,
           max_tokens: 1000,
           top_p: 1,
           // user: covId,
@@ -197,14 +202,11 @@ function getConversationFromOpenAi(contactId: string) {
           // stop: ['\n'],
         };
 
-        // console.log('args:', args);
+        console.log({ resPrompt });
         const response2 = await _openAi.createCompletion({
           ...args,
           // stop: ['\n'],
         });
-        // console.log('response2:\n');
-        // console.log(JSON.stringify(response2.data, null, 2));
-        // process.exit();
         const aContent = response2.data.choices
           .map((item) => item.text)
           .join('\n')
@@ -219,14 +221,23 @@ function getConversationFromOpenAi(contactId: string) {
           covId = response2.data.id;
           conversationMap.set(contactId, conversation);
         }
-
         return aContent;
-      } catch (e) {
-        console.log(e);
+      } catch (e: any) {
+        // console.log(e.message || e);
+        conversationMap.delete(contactId);
+        if (e.response) {
+          const msg = `Error: ${e.response.status}\n${JSON.stringify(
+            e.response.data,
+            null,
+            2
+          )}`;
+          return msg;
+        }
         throw e;
       }
     },
   };
+  conversationMap.set(contactId, conversation);
   return conversation;
 }
 
@@ -343,13 +354,14 @@ export async function replyMessage(contact, content, contactId) {
       await contact.say(message);
     }
   } catch (e: any) {
-    console.error(e);
+    console.error(e.message || e);
     if (e.message.includes('timed out')) {
       await contact.say(
         // eslint-disable-next-line prettier/prettier
-        content +
-          '\n-----------\nERROR: Please try again, ChatGPT timed out for waiting response.'
+        `${content}\n-----------\nERROR: Please try again, ChatGPT timed out for waiting response.`
       );
+    } else {
+      await contact.say(e.message);
     }
     conversationMap.delete(contactId);
   }

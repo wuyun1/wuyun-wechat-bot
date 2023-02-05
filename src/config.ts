@@ -38,4 +38,6 @@ export default {
   groupReplyMode: true,
   // 是否在私聊中按照回复的格式进行回复
   privateReplyMode: false,
+  adminWxAliasName: 'admin',
+  // adminWxId: 'awyqwx',
 };
