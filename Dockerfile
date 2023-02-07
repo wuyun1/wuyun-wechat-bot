@@ -54,8 +54,8 @@ RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd6
   apt-get install -y /tmp/google-chrome-stable_current_amd64.deb
 
 RUN if [ "x$ALIYUN" != "xnone" ] ; then \
-      export HTTP_GIT_PREFIX="https://github.91chi.fun/" && \
-      git config --global url."https://github.91chi.fun/https://github.com".insteadOf https://github.com ; \
+      export HTTP_GIT_PREFIX="https://ghproxy.com/" && \
+      git config --global url."https://ghproxy.com/https://github.com".insteadOf https://github.com ; \
     else \
       export HTTP_GIT_PREFIX="" ; \
     fi && \
@@ -121,7 +121,7 @@ RUN apt-get update && apt-get upgrade -y && \
 
 # # Install pyenv
 # RUN set -ex \
-#     # && git config --global url."https://github.91chi.fun/https://github.com".insteadOf https://github.com \
+#     # && git config --global url."https://ghproxy.com/https://github.com".insteadOf https://github.com \
 #     && curl https://pyenv.run | bash \
 #     && pyenv update \
 #     && pyenv install $PYTHON_VERSION \
