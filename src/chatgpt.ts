@@ -1,3 +1,4 @@
+import './init-fetch';
 import {
   ChatGPTAPI,
   getOpenAIAuth,
@@ -478,7 +479,7 @@ export async function replyMessage(contact, content, contactId) {
         `${content}\n-----------\nERROR: Please try again, ChatGPT timed out for waiting response.`
       );
     } else {
-      await contact.say(e.message);
+      await contact.say(`Error: ${e.message}`);
     }
     conversationMap.delete(contactId);
   }

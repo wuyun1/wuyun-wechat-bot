@@ -19,7 +19,8 @@ export default {
   email: process.env.OPENAI_EMAIL,
   password: process.env.OPENAI_PASSWORD,
   openApiKey: process.env.OPENAI_API_KEY,
-  genTextApi: process.env.GENTEXT_API || 'http://127.0.0.1:8000/api/generate',
+  genTextApi: (process.env.GENTEXT_API ||
+    'http://127.0.0.1:8000/api/generate') as string | null,
   // // 填入你的session token
   // chatGPTSessionToken: '',
   // clearanceToken: '',

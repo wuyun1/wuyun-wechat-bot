@@ -112,6 +112,10 @@ async def main():
 
 # cd app && uvicorn main-api:app --host 0.0.0.0 --port 8000 --reload
 
+import traceback
+from typing import Union
+
+from pydantic import BaseModel
 
 
 class Question(BaseModel):

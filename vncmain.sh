@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # Set them to empty is NOT SECURE but avoid them display in random logs.
 # export VNC_PASSWD=''
 # export USER_PASSWD=''
@@ -28,4 +29,4 @@
 
 # (cd /home/python-user/app && ls -lah)
 # (cd /app && npm run dev2)
-(cd /app/app && /usr/local/bin/uvicorn main-api:app --host 0.0.0.0 --port 8000 --reload)
+(cd /app/app && /home/python-user/.pyenv/shims/python3 -m uvicorn main-api:app --host 0.0.0.0 --port 8000)

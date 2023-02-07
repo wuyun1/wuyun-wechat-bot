@@ -12,7 +12,7 @@ pdf2docx==0.5.6
 
 python-multipart==0.0.5
 
-transformers
+# transformers
 
 torch
 torchvision

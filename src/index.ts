@@ -85,7 +85,7 @@ async function onMessage(msg: MessageInterface) {
         await adminUser.say(_msg);
       } else {
         loginOpenAi(null);
-        config.genTextApi = undefined;
+        config.genTextApi = null;
         await adminUser.say(`清除 GenTextApi 成功`);
       }
       return;
@@ -254,7 +254,7 @@ async function onFriendShip(friendship) {
 
   // return;
   bot = WechatyBuilder.build({
-    name: 'WechatEveryDay2',
+    name: 'WechatEveryDay',
     // puppet: 'wechaty-puppet-wechat4u', // 如果有token，记得更换对应的puppet
     puppet: 'wechaty-puppet-wechat', // 如果有token，记得更换对应的puppet
     puppetOptions: {

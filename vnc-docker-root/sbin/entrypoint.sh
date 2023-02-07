@@ -54,7 +54,7 @@ case ${1} in
     tmux send-keys -t websocketify "sudo -Hu user /_app/src/websockify/run 9001 127.0.0.1:5911" C-m
     sleep 2
     tmux capture-pane -t websocketify -peN
-    sudo --preserve-env -Hu user /app/vncmain.sh "$@"
+    sudo --preserve-env --preserve-env=PATH -Hu user /app/vncmain.sh "$@"
     ;;
   *)
     exec "$@"

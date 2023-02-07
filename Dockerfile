@@ -48,9 +48,7 @@ RUN set -ex && \
         # python-numpy \
         xorg openbox rxvt-unicode
     # apt-get purge -y git wget && \
-    # apt-get autoremove -y && \
-    # apt-get clean && \
-    # rm -fr /tmp/* /app/src/novnc/.git /app/src/websockify/.git /var/lib/apt/lists
+    # apt-get autoremove -y && apt-get clean && rm -fr /tmp/* /app/src/novnc/.git /app/src/websockify/.git /var/lib/apt/lists
 
 RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -O /tmp/google-chrome-stable_current_amd64.deb && \
   apt-get install -y /tmp/google-chrome-stable_current_amd64.deb
@@ -81,7 +79,9 @@ ENTRYPOINT ["/sbin/entrypoint.sh"]
 
 CMD ["start"]
 
-ENV NODE_VERSION v18.13.0
+# ENV NODE_VERSION v19.6.0
+# ENV NODE_VERSION v18.14.0
+ENV NODE_VERSION v16.19.0
 
 ENV NVM_DIR=/root/.nvm
 ENV NVM_SOURCE=https://gitee.com/mirrors/nvm.git
@@ -91,17 +91,14 @@ RUN curl -o- https://gitee.com/mirrors/nvm/raw/master/install.sh | bash
 
 ENV PATH /root/.nvm/versions/node/$NODE_VERSION/bin:$PATH
 
-# RUN ln -s /usr/local/bin/node /usr/local/bin/nodejs \
-#     # smoke tests
-#     && node --version \
-#     && npm --version
+RUN node --version \
+    && npm --version
 
 FROM novnc-node-18 AS laststage
 
 ARG ALIYUN=""
 
 RUN groupadd -r python-user && useradd -r -m -g python-user python-user
-
 
 # RUN echo $PATH && whoami && dfasd
 RUN apt-get update && apt-get upgrade -y && \
@@ -111,7 +108,7 @@ RUN apt-get update && apt-get upgrade -y && \
 
 # USER python-user
 
-ENV PYTHON_VERSION 3.11.1
+ENV PYTHON_VERSION 3.10.6
 
 # Set-up necessary Env vars for PyEnv
 ENV PYENV_ROOT=/home/python-user/.pyenv
@@ -120,7 +117,7 @@ ENV PATH=$PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
 # Install pyenv
 RUN set -ex \
     && if [ "x$ALIYUN" != "xnone" ] ; then \
-      (echo https://ghproxy.com/ > /tmp/HTTP_GIT_PREFIX&& git config --global url."https://ghproxy.com/https://github.com".insteadOf https://github.com); \
+      (echo https://ghproxy.com/ > /tmp/HTTP_GIT_PREFIX && git config --global url."https://ghproxy.com/https://github.com".insteadOf https://github.com); \
     fi \
     && curl "`cat /tmp/HTTP_GIT_PREFIX`https://raw.githubusercontent.com/pyenv/pyenv-installer/master/bin/pyenv-installer" | bash \
     && pyenv update \
@@ -134,6 +131,10 @@ RUN set -ex \
 # RUN wget https://www.python.org/ftp/python/3.11.1/Python-3.11.1.tgz && tar xzf Python-3.11.1.tgz
 # RUN cd Python-3.11.1 && ./configure --enable-optimizations
 # RUN cd Python-3.11.1 && make altinstall
+
+# RUN apt-get install -y cmake pkg-config
+
+RUN git clone https://github.com/huggingface/transformers.git && cd transformers && pip install -e . && cd .. && rm -rf transformers
 
 COPY ./requirements.txt /home/python-user/app/requirements.txt
 
@@ -179,9 +180,9 @@ RUN chmod +x /app/vncmain.sh
 
 # docker build . -t docker.io/library/wechatbot:latest
 # docker build . -t docker.io/library/wechatbot:latest --build-arg ALIYUN=none
-# docker run -ti --name vnc-test --env-file .env -p 3000:3000 -p 8000:8000 --rm oott123/novnc:latest bash
-# docker run -ti --name vnc-test --env-file .env -p 9000:9000 --rm docker.io/library/wechatbot:latest
-# docker run -ti --name vnc-test --env-file .env -p 9000:9000 --rm docker.io/library/wechatbot:latest
+# docker run -ti --name vnc-test -v $(cd ~;pwd)/.cache:/home/user/.cache --env-file .env -p 3000:3000 -p 8000:8000 --rm oott123/novnc:latest bash
+# docker run -ti --name vnc-test -v $(cd ~;pwd)/.cache:/home/user/.cache --env-file .env -p 9000:9000 --rm docker.io/library/wechatbot:latest
+# docker run -ti --name vnc-test -v $(cd ~;pwd)/.cache:/home/user/.cache --env-file .env -p 9000:9000 --rm docker.io/library/wechatbot:latest
 
-# docker run --env-file .env -e torch_device=cpu -v $(cd ~;pwd)/.cache:/home/qhduan/.cache -p 8000:8000 --rm --name ai-test -ti docker.io/library/wechatbot:latest
-# docker run --env-file .env --gpus all -e torch_device=cuda -v $(cd ~;pwd)/.cache:/home/qhduan/.cache -p 8000:8000 --rm --name ai-test -ti docker.io/library/wechatbot:latest
+# docker run --env-file .env -e torch_device=cpu -v $(cd ~;pwd)/.cache:/home/user/.cache -p 9000:9000  -p 8000:8000 --rm --name ai-test -ti docker.io/library/wechatbot:latest
+# docker run --env-file .env --gpus all -e torch_device=cuda -v $(cd ~;pwd)/.cache:/home/user/.cache -p 9000:9000  -p 8000:8000 --rm --name ai-test -ti docker.io/library/wechatbot:latest
