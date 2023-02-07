@@ -13,6 +13,7 @@ import {
 } from 'fs';
 import { Configuration, OpenAIApi } from 'openai';
 import pTimeout from 'p-timeout';
+import axios from 'axios';
 import { join } from 'path';
 import config from './config';
 import { retryRequest } from './utils';
@@ -130,6 +131,111 @@ type Sequence = {
   content: string;
 };
 
+function getConversationFromGenTextApi(contactId: string) {
+  if (conversationMap.has(contactId)) {
+    return conversationMap.get(contactId);
+  }
+
+  let covId: undefined | string = undefined;
+
+  let sequences: Sequence[] = [];
+
+  let timeoutId: any = null;
+
+  const getPrompt = (_sequences: any[]) => {
+    const map = {
+      Q: '用户',
+      A: 'AI',
+    };
+    return _sequences
+      .map((item) => {
+        // let endC = '';
+        // if (item.type === 'Q') {
+        //   if (!(item.content.endsWith('?') || item.content.endsWith('？'))) {
+        //     endC = '?';
+        //   }
+        // }
+        // return `${map[item.type] || item.type}: ${item.content}${endC}`;
+        return `${map[item.type] || item.type}: ${item.content}`;
+      })
+      .join('\n\n');
+  };
+
+  const conversation = {
+    sendMessage: async (content: string) => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+
+      timeoutId = setTimeout(() => {
+        sequences = [];
+      }, 5 * 60 * 1000);
+
+      try {
+        if (!config.genTextApi) {
+          conversationMap.delete(contactId);
+          sequences = [];
+          return '没有设置 genTextApi!';
+        }
+        sequences.push({
+          type: 'Q',
+          content,
+        });
+
+        let prompt = getPrompt(sequences);
+
+        while (prompt.length > 2000) {
+          sequences = sequences.slice(2);
+          prompt = getPrompt(sequences);
+        }
+        const resPrompt = `请用 markdown 格式补充下面对话: \n${prompt}\n\nAI:`;
+        const args = {
+          text: resPrompt,
+          max_len: 500,
+          temperature: 1,
+          top_p: 0.95,
+          sample: true,
+        };
+        console.log({ resPrompt });
+        const response2 = await axios.post(config.genTextApi, args);
+
+        if (!response2.data.ok) {
+          throw response2;
+        }
+
+        const aContent = response2.data.text;
+
+        sequences.push({
+          type: 'A',
+          content: aContent,
+        });
+
+        if (!covId && response2.data.id) {
+          covId = response2.data.id;
+          conversationMap.set(contactId, conversation);
+        }
+
+        return aContent;
+      } catch (e: any) {
+        // console.log(e.message || e);
+        conversationMap.delete(contactId);
+        if (e.response) {
+          const msg = `Error: ${e.response.status}\n${JSON.stringify(
+            e.response.data,
+            null,
+            2
+          )}`;
+          return msg;
+        }
+        throw e;
+      }
+    },
+  };
+  conversationMap.set(contactId, conversation);
+  return conversation;
+}
+
 function getConversationFromOpenAi(contactId: string) {
   if (conversationMap.has(contactId)) {
     return conversationMap.get(contactId);
@@ -143,7 +249,7 @@ function getConversationFromOpenAi(contactId: string) {
 
   const getPrompt = (_sequences: any[]) => {
     const map = {
-      Q: '人',
+      Q: '用户',
       A: 'AI',
     };
     return _sequences
@@ -174,6 +280,7 @@ function getConversationFromOpenAi(contactId: string) {
       try {
         const _openAi = loginOpenAi();
         if (!_openAi) {
+          conversationMap.delete(contactId);
           sequences = [];
           return '没有设置 openAiKey!';
         }
@@ -189,7 +296,7 @@ function getConversationFromOpenAi(contactId: string) {
           sequences = sequences.slice(2);
           prompt = getPrompt(sequences);
         }
-        const resPrompt = `请用 markdown 格式补充下面对话: \n${prompt}\n\nAI:`;
+        const resPrompt = `用 markdown 格式完善下面对话: \n${prompt}\n\nAI:`;
         const args = {
           model: 'text-davinci-003',
           prompt: resPrompt,
@@ -211,7 +318,7 @@ function getConversationFromOpenAi(contactId: string) {
           .map((item) => item.text)
           .join('\n')
           .trim()
-          .replace(/^\s*[aA]:\s*/, '');
+          .replace(/^\s*用户:\s*/, '');
 
         sequences.push({
           type: 'A',
@@ -242,9 +349,13 @@ function getConversationFromOpenAi(contactId: string) {
 }
 
 async function getChatGPTReply(content, contactId) {
-  const getConversationFn = config.openApiKey
-    ? getConversationFromOpenAi
-    : getConversation;
+  let getConversationFn = getConversation;
+
+  if (config.genTextApi) {
+    getConversationFn = getConversationFromGenTextApi;
+  } else if (config.openApiKey) {
+    getConversationFn = getConversationFromOpenAi;
+  }
 
   const currentConversation = getConversationFn(contactId);
   // send a message and wait for the response
@@ -278,6 +389,12 @@ export const loginChatGpt = async ({
         throw new Error('当前目录下不存在 chatGPT token');
       }
       if (force || !cacheData) {
+        if (!(config.email && config.password)) {
+          throw new Error(
+            `请设置环境变量 （ OPENAI_EMAIL 和 OPENAI_PASSWORD ）`
+          );
+        }
+
         cacheData = await getOpenAIAuth({
           email: config.email,
           password: config.password,

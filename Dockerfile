@@ -1,6 +1,8 @@
 # FROM ubuntu AS novnc-node-18
-FROM node:18-slim AS novnc-node-18
+FROM nvidia/cuda:10.0-runtime-ubuntu18.04 AS novnc-node-18
 # FROM ubuntu
+
+RUN rm -rf /etc/apt/sources.list.d/*
 
 ARG ALIYUN=""
 
@@ -13,8 +15,8 @@ RUN if [ "x$ALIYUN" != "xnone" ] ; then mv -f /tmp/sources.list.1 /etc/apt/sourc
 # RUN apt update -y && apt install --reinstall ca-certificates -y
 
 # 各种环境变量
-ENV LANG=zh_CN.UTF-8 \
-    LC_ALL=zh_CN.UTF-8 \
+ENV LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
     S6_BEHAVIOUR_IF_STAGE2_FAILS=2 \
     S6_CMD_ARG0=/sbin/entrypoint.sh \
     DEBIAN_FRONTEND=noninteractive \
@@ -25,7 +27,7 @@ ENV LANG=zh_CN.UTF-8 \
     USER_PASSWD=abc1234 \
     GIT_SSL_NO_VERIFY=1 \
     TIGERVNC_VERSION=1.12.0 \
-    LANGUAGE=zh_CN.UTF-8
+    LANGUAGE=C.UTF-8
 
 # 首先加用户，防止 uid/gid 不稳定
 RUN set -ex && \
@@ -82,18 +84,15 @@ ENTRYPOINT ["/sbin/entrypoint.sh"]
 
 CMD ["start"]
 
-# ENV NODE_VERSION v19.4.0
+ENV NODE_VERSION v18.13.0
 
-# ENV NVM_DIR=/root/.nvm
-# ENV NVM_SOURCE=https://gitee.com/mirrors/nvm.git
-# ENV NVM_NODEJS_ORG_MIRROR=http://npm.taobao.org/mirrors/node
+ENV NVM_DIR=/root/.nvm
+ENV NVM_SOURCE=https://gitee.com/mirrors/nvm.git
+ENV NVM_NODEJS_ORG_MIRROR=http://npm.taobao.org/mirrors/node
 
-# RUN curl -o- https://gitee.com/mirrors/nvm/raw/master/install.sh | bash
+RUN curl -o- https://gitee.com/mirrors/nvm/raw/master/install.sh | bash
 
-# ENV PATH /root/.nvm/versions/node/$NODE_VERSION/bin:$PATH
-
-# RUN node -v
-
+ENV PATH /root/.nvm/versions/node/$NODE_VERSION/bin:$PATH
 
 # RUN ln -s /usr/local/bin/node /usr/local/bin/nodejs \
 #     # smoke tests
@@ -119,24 +118,14 @@ RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y -f \
       wget unzip curl git python3 python3-pip python3-tk
 
-# # Install pyenv
-# RUN set -ex \
-#     # && git config --global url."https://ghproxy.com/https://github.com".insteadOf https://github.com \
-#     && curl https://pyenv.run | bash \
-#     && pyenv update \
-#     && pyenv install $PYTHON_VERSION \
-#     && pyenv global $PYTHON_VERSION \
-#     && pyenv rehash
-
-# RUN python3 -m pip install --upgrade pip
-
-# COPY --chown=user:user ./requirements.txt /home/python-user/app/requirements.txt
 COPY ./requirements.txt /home/python-user/app/requirements.txt
 
 RUN if [ "x$ALIYUN" != "xnone" ] ; then \
-      pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple; \
+      (python3 -m pip install --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple && python3 -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple); \
+    else \
+      python3 -m pip install --upgrade pip; \
     fi && \
-    pip install --no-cache-dir --upgrade -r /home/python-user/app/requirements.txt
+    python3 -m pip install --no-cache-dir --upgrade -r /home/python-user/app/requirements.txt
 
 # USER root
 
@@ -171,8 +160,11 @@ RUN chmod +x /app/vncmain.sh
 # RUN npm run build
 # CMD ["node", "lib/bundle.esm.js"]
 
-# docker build . -t wechatbot:latest
-# docker build . -t wechatbot:latest --build-arg ALIYUN=none
-# docker run -ti --name vnc-test --env-file .env -p 3000:3000 -p 8000:8000  --rm oott123/novnc:latest bash
+# docker build . -t docker.io/library/wechatbot:latest
+# docker build . -t docker.io/library/wechatbot:latest --build-arg ALIYUN=none
+# docker run -ti --name vnc-test --env-file .env -p 3000:3000 -p 8000:8000 --rm oott123/novnc:latest bash
 # docker run -ti --name vnc-test --env-file .env -p 9000:9000 --rm docker.io/library/wechatbot:latest
-# docker run -ti --name vnc-test --env-file .env -p 9000:9000 --rm localhost/wechatbot:latest
+# docker run -ti --name vnc-test --env-file .env -p 9000:9000 --rm docker.io/library/wechatbot:latest
+
+# docker run --env-file .env -e torch_device=cpu -v $(cd ~;pwd)/.cache:/home/qhduan/.cache -p 8000:8000 --rm --name ai-test -ti docker.io/library/wechatbot:latest
+# docker run --env-file .env --gpus all -e torch_device=cuda -v $(cd ~;pwd)/.cache:/home/qhduan/.cache -p 8000:8000 --rm --name ai-test -ti docker.io/library/wechatbot:latest

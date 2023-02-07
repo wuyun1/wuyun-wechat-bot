@@ -61,18 +61,32 @@ async function onMessage(msg: MessageInterface) {
       return;
     }
 
-    if (content.toLowerCase() === 'cleanOpenAiApiKey'.toLowerCase()) {
-      loginOpenAi(null);
-      await adminUser.say(`清除 OpenAiApiKey 成功`);
-      return;
-    }
-
     if (content.toLowerCase().startsWith('setOpenAiApiKey'.toLowerCase())) {
-      const key = content.replace(new RegExp('setOpenAiApiKey', 'i'), '');
+      const key = content
+        .replace(new RegExp('setOpenAiApiKey', 'i'), '')
+        .trim();
       if (key) {
         loginOpenAi(key);
         const _msg = `设置 OpenAiApiKey 成功. ${key}`;
         await adminUser.say(_msg);
+      } else {
+        loginOpenAi(null);
+        await adminUser.say(`清除 OpenAiApiKey 成功`);
+      }
+      return;
+    }
+
+    if (content.toLowerCase().startsWith('setGenTextApi'.toLowerCase())) {
+      const key = content.replace(new RegExp('setGenTextApi', 'i'), '').trim();
+      if (key) {
+        // loginOpenAi(key);
+        config.genTextApi = key;
+        const _msg = `设置 GenTextApi 成功. ${key}`;
+        await adminUser.say(_msg);
+      } else {
+        loginOpenAi(null);
+        config.genTextApi = undefined;
+        await adminUser.say(`清除 GenTextApi 成功`);
       }
       return;
     }

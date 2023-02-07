@@ -2,22 +2,24 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-if (
-  !(
-    (process.env.OPENAI_EMAIL && process.env.OPENAI_PASSWORD) ||
-    process.env.OPENAI_API_KEY
-  )
-) {
-  throw new Error(
-    `请设置环境变量 （ OPENAI_EMAIL 和 OPENAI_PASSWORD ） 或者设置 （ OPENAI_API_KEY ）`
-  );
-  process.exit(1);
-}
+// if (
+//   !(
+//     (process.env.OPENAI_EMAIL && process.env.OPENAI_PASSWORD) ||
+//     process.env.OPENAI_API_KEY ||
+//     process.env.GENTEXT_API
+//   )
+// ) {
+//   throw new Error(
+//     `请设置环境变量 （ OPENAI_EMAIL 和 OPENAI_PASSWORD ） 或者设置 （ OPENAI_API_KEY ）`
+//   );
+//   // process.exit(1);
+// }
 
 export default {
   email: process.env.OPENAI_EMAIL,
   password: process.env.OPENAI_PASSWORD,
   openApiKey: process.env.OPENAI_API_KEY,
+  genTextApi: process.env.GENTEXT_API || 'http://127.0.0.1:8000/api/generate',
   // // 填入你的session token
   // chatGPTSessionToken: '',
   // clearanceToken: '',
