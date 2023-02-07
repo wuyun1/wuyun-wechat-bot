@@ -56,10 +56,7 @@ RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd6
   apt-get install -y /tmp/google-chrome-stable_current_amd64.deb
 
 RUN if [ "x$ALIYUN" != "xnone" ] ; then \
-      export HTTP_GIT_PREFIX="https://ghproxy.com/" && \
       git config --global url."https://ghproxy.com/https://github.com".insteadOf https://github.com ; \
-    else \
-      export HTTP_GIT_PREFIX="" ; \
     fi && \
     # tigervnc
     wget -O /tmp/tigervnc.tar.gz https://nchc.dl.sourceforge.net/project/tigervnc/stable/${TIGERVNC_VERSION}/tigervnc-${TIGERVNC_VERSION}.x86_64.tar.gz && \
@@ -105,18 +102,38 @@ ARG ALIYUN=""
 
 RUN groupadd -r python-user && useradd -r -m -g python-user python-user
 
-# USER python-user
-
-ENV PYTHON_VERSION 3.10.0
-
-# Set-up necessary Env vars for PyEnv
-ENV PYENV_ROOT /home/python-user/.pyenv
-ENV PATH $PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
 
 # RUN echo $PATH && whoami && dfasd
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y -f \
-      wget unzip curl git python3 python3-pip python3-tk
+    wget unzip curl git build-essential libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev zlib1g-dev # python3 python3-pip python3-tk
+    # apt-get clean && rm -fr /tmp/* /var/lib/apt/lists
+
+# USER python-user
+
+ENV PYTHON_VERSION 3.11.1
+
+# Set-up necessary Env vars for PyEnv
+ENV PYENV_ROOT=/home/python-user/.pyenv
+ENV PATH=$PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
+
+# Install pyenv
+RUN set -ex \
+    && if [ "x$ALIYUN" != "xnone" ] ; then \
+      (echo https://ghproxy.com/ > /tmp/HTTP_GIT_PREFIX&& git config --global url."https://ghproxy.com/https://github.com".insteadOf https://github.com); \
+    fi \
+    && curl "`cat /tmp/HTTP_GIT_PREFIX`https://raw.githubusercontent.com/pyenv/pyenv-installer/master/bin/pyenv-installer" | bash \
+    && pyenv update \
+    && if [ "x$ALIYUN" != "xnone" ] ; then wget https://npm.taobao.org/mirrors/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tar.xz -P /home/python-user/.pyenv/cache/; fi \
+    && pyenv install $PYTHON_VERSION \
+    && pyenv global $PYTHON_VERSION \
+    && pyenv rehash
+
+# apt install -y wget build-essential libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev zlib1g-dev
+
+# RUN wget https://www.python.org/ftp/python/3.11.1/Python-3.11.1.tgz && tar xzf Python-3.11.1.tgz
+# RUN cd Python-3.11.1 && ./configure --enable-optimizations
+# RUN cd Python-3.11.1 && make altinstall
 
 COPY ./requirements.txt /home/python-user/app/requirements.txt
 
