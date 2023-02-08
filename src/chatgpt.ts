@@ -146,7 +146,7 @@ function getConversationFromGenTextApi(contactId: string) {
   const getPrompt = (_sequences: any[]) => {
     const map = {
       Q: '用户',
-      A: 'AI',
+      A: '小元',
     };
     return _sequences
       .map((item) => {
@@ -190,7 +190,7 @@ function getConversationFromGenTextApi(contactId: string) {
           sequences = sequences.slice(2);
           prompt = getPrompt(sequences);
         }
-        const resPrompt = `请用 markdown 格式补充下面对话: \n${prompt}\n\nAI:`;
+        const resPrompt = `${prompt}\n\nAI:`;
         const args = {
           text: resPrompt,
           max_len: 500,
