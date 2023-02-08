@@ -45,15 +45,15 @@ case ${1} in
     sleep 2
     touch ~/.Xauthority
     xauth add `sudo --preserve-env -Hu user xauth list $DISPLAY`
-    # tmux capture-pane -t tigervnc -peN
+    # tmux capture-pane -t tigervnc -pe # N
     tmux new -d -s nginx
     tmux send-keys -t nginx "nginx -g 'daemon off;'" C-m
     sleep 2
-    tmux capture-pane -t nginx -peN
+    tmux capture-pane -t nginx -pe # N
     tmux new -d -s websocketify
     tmux send-keys -t websocketify "sudo -Hu user /_app/src/websockify/run 9001 127.0.0.1:5911" C-m
     sleep 2
-    tmux capture-pane -t websocketify -peN
+    tmux capture-pane -t websocketify -pe # N
     sudo --preserve-env --preserve-env=PATH -Hu user /app/vncmain.sh "$@"
     ;;
   *)
