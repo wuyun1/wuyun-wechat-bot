@@ -209,7 +209,7 @@ function getConversationFromGenTextApi(contactId: string) {
 
         if (!aContent) {
           console.log(response2);
-          return '（没有回应)';
+          return '（没有回应, 请发送 "reset" 重置对话)';
         }
 
         sequences.push({
