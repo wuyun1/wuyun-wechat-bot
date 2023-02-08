@@ -20,12 +20,8 @@ async def test(response: Response):
     response.status_code = status.HTTP_403_FORBIDDEN
     return {"status": "error", "error": "Forbidden"}
 
-from pdf2docx import Converter
 
-def pdf_to_word(pdf_file_path, word_file_path):
-    cv = Converter(pdf_file_path)
-    cv.convert(word_file_path)
-    cv.close()
+from pdf import pdf_to_word
 
 import random
 import string

@@ -1,4 +1,5 @@
 import { spawnSync } from 'child_process';
+import { join } from 'path';
 
 const sleep = (time: number) => {
   return new Promise((resolve) => {
@@ -43,5 +44,9 @@ export const retryRequest = async <T>(
 };
 
 export const pdfToWord = async (pdfFilePath: string, wordFilePath: string) => {
-  return spawnSync(`python3`, ['./app/main.py', pdfFilePath, wordFilePath]);
+  return spawnSync(`python3`, [
+    join(process.cwd(), './app/pdf.py'),
+    pdfFilePath,
+    wordFilePath,
+  ]);
 };
