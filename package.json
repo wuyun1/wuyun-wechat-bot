@@ -11,7 +11,7 @@
     "gettoken": "ts-node --esm --preferTsExts --experimentalSpecifierResolution node src/chatgpt-test.ts",
     "dev2": "ts-node --esm --preferTsExts --experimentalSpecifierResolution node src/index.ts",
     "test-pdf": "ts-node --esm --preferTsExts --experimentalSpecifierResolution node src/test-pdf.ts",
-    "dev": "npm run build && node lib/bundle.esm.js",
+    "dev": "npm run build && node --experimental-fetch lib/bundle.esm.js",
     "build": "rimraf lib/* && rollup -c",
     "watch": "rimraf lib/* && rollup -c -w",
     "puppet-install": "node node_modules/.bin/wechaty-puppet-install",
