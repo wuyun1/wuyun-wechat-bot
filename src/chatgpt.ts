@@ -186,8 +186,8 @@ function getConversationFromGenTextApi(contactId: string) {
 
         let prompt = getPrompt(sequences);
 
-        while (prompt.length > 2000) {
-          sequences = sequences.slice(2);
+        while (prompt.length > 4096) {
+          sequences = sequences.slice(1);
           prompt = getPrompt(sequences);
         }
         const resPrompt = `${prompt}\n\nAI:`;
@@ -294,7 +294,7 @@ function getConversationFromOpenAi(contactId: string) {
         let prompt = getPrompt(sequences);
 
         while (prompt.length > 2000) {
-          sequences = sequences.slice(2);
+          sequences = sequences.slice(1);
           prompt = getPrompt(sequences);
         }
         const resPrompt = `用 markdown 格式完善下面对话: \n${prompt}\n\nAI:`;
