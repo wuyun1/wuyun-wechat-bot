@@ -190,7 +190,7 @@ function getConversationFromGenTextApi(contactId: string) {
           sequences = sequences.slice(1);
           prompt = getPrompt(sequences);
         }
-        const resPrompt = `${prompt}\n\nAI:`;
+        const resPrompt = `${prompt}\n\n小元:`;
         const args = {
           text: resPrompt,
           max_len: 500,
@@ -206,6 +206,11 @@ function getConversationFromGenTextApi(contactId: string) {
         }
 
         const aContent = response2.data.text;
+
+        if (!aContent) {
+          console.log(response2);
+          return '（没有回应)';
+        }
 
         sequences.push({
           type: 'A',
