@@ -28,6 +28,8 @@ async function onMessage(msg: MessageInterface) {
 
   const isText = msg.type() === types.Message.Text;
 
+  // await msg.toRecalled();
+
   if ((msg.self() || _alias === config.adminWxAliasName) && isText) {
     const content = msg.text().trim();
 
@@ -90,10 +92,10 @@ async function onMessage(msg: MessageInterface) {
       }
       return;
     }
+  }
 
-    if (msg.self()) {
-      return;
-    }
+  if (msg.self()) {
+    return;
   }
 
   if (msg.type() === types.Message.Attachment) {
@@ -252,9 +254,11 @@ async function onFriendShip(friendship) {
 (() => {
   // loginChatGpt();
 
+  const USER_HOME = process.env.HOME || process.env.USERPROFILE;
+
   // return;
   bot = WechatyBuilder.build({
-    name: 'WechatEveryDay',
+    name: `${USER_HOME}/.cache/WechatEveryDay`,
     // puppet: 'wechaty-puppet-wechat4u', // 如果有token，记得更换对应的puppet
     puppet: 'wechaty-puppet-wechat', // 如果有token，记得更换对应的puppet
     puppetOptions: {

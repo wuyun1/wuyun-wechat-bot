@@ -96,37 +96,38 @@ RUN node --version \
 
 FROM novnc-node-18 AS laststage
 
-ARG ALIYUN=""
+# ARG ALIYUN=""
 
-RUN groupadd -r python-user && useradd -r -m -g python-user python-user
+# RUN groupadd -r user && useradd -r -m -g user user
 
 # RUN echo $PATH && whoami && dfasd
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y -f \
-    wget unzip curl git build-essential libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev zlib1g-dev # python3 python3-pip python3-tk
+    wget unzip curl git \
+    build-essential libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev zlib1g-dev
+    # python3 python3-pip python3-tk
     # apt-get clean && rm -fr /tmp/* /var/lib/apt/lists
 
-# USER python-user
+# USER user
 
 ENV PYTHON_VERSION 3.10.6
 
-# Set-up necessary Env vars for PyEnv
-ENV PYENV_ROOT=/home/python-user/.pyenv
+# # Set-up necessary Env vars for PyEnv
+ENV PYENV_ROOT=/home/user/.pyenv
 ENV PATH=$PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
 
-# Install pyenv
+# # Install pyenv
 RUN set -ex \
     && if [ "x$ALIYUN" != "xnone" ] ; then \
       (echo https://ghproxy.com/ > /tmp/HTTP_GIT_PREFIX && git config --global url."https://ghproxy.com/https://github.com".insteadOf https://github.com); \
     fi \
     && curl "`cat /tmp/HTTP_GIT_PREFIX`https://raw.githubusercontent.com/pyenv/pyenv-installer/master/bin/pyenv-installer" | bash \
     && pyenv update \
-    && if [ "x$ALIYUN" != "xnone" ] ; then wget https://npm.taobao.org/mirrors/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tar.xz -P /home/python-user/.pyenv/cache/; fi \
+    && if [ "x$ALIYUN" != "xnone" ] ; then wget https://npm.taobao.org/mirrors/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tar.xz -P /home/user/.pyenv/cache/; fi \
     && pyenv install $PYTHON_VERSION \
     && pyenv global $PYTHON_VERSION \
     && pyenv rehash
 
-# apt install -y wget build-essential libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev zlib1g-dev
 
 # RUN wget https://www.python.org/ftp/python/3.11.1/Python-3.11.1.tgz && tar xzf Python-3.11.1.tgz
 # RUN cd Python-3.11.1 && ./configure --enable-optimizations
@@ -134,23 +135,22 @@ RUN set -ex \
 
 # RUN apt-get install -y cmake pkg-config
 
-RUN git clone https://github.com/huggingface/transformers.git && cd transformers && pip install -e . && cd .. && rm -rf transformers
+EXPOSE 8000
 
-COPY ./requirements.txt /home/python-user/app/requirements.txt
+WORKDIR /app
+
+COPY ./requirements.txt /app/requirements.txt
 
 RUN if [ "x$ALIYUN" != "xnone" ] ; then \
       (python3 -m pip install --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple && python3 -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple); \
     else \
       python3 -m pip install --upgrade pip; \
     fi && \
-    python3 -m pip install --no-cache-dir --upgrade -r /home/python-user/app/requirements.txt
+    git clone https://github.com/huggingface/transformers.git && python3 -m pip install ./transformers && rm -rf transformers && \
+    # python3 -m pip install transformers && \
+    python3 -m pip install --no-cache-dir --upgrade -r /app/requirements.txt
 
 # USER root
-
-EXPOSE 8000
-
-WORKDIR /app
-
 
 ADD package.json /app/
 
@@ -167,22 +167,22 @@ RUN npm install
 # # installs, work.
 
 
-# COPY --chown=user:user ./app /home/python-user/app
+# COPY --chown=user:user ./app /home/user/app
 ADD ./app /app/app/
 ADD ./src /app/src
 ADD ./tsconfig.json /app/
 ADD ./rollup.config.js /app/
 COPY vncmain.sh /app/vncmain.sh
-RUN chmod +x /app/vncmain.sh
+# RUN chmod +x /app/vncmain.sh
 
 # RUN npm run build
 # CMD ["node", "lib/bundle.esm.js"]
 
-# docker build . -t docker.io/library/wechatbot:latest
-# docker build . -t docker.io/library/wechatbot:latest --build-arg ALIYUN=none
-# docker run -ti --name vnc-test -v $(cd ~;pwd)/.cache:/home/user/.cache --env-file .env -p 3000:3000 -p 8000:8000 --rm oott123/novnc:latest bash
-# docker run -ti --name vnc-test -v $(cd ~;pwd)/.cache:/home/user/.cache --env-file .env -p 9000:9000 --rm docker.io/library/wechatbot:latest
-# docker run -ti --name vnc-test -v $(cd ~;pwd)/.cache:/home/user/.cache --env-file .env -p 9000:9000 --rm docker.io/library/wechatbot:latest
+# docker build . -t docker.io/library/wechatbot:1
+# docker build . -t docker.io/library/wechatbot:1 --build-arg ALIYUN=none
+# docker run -ti --name vnc-test -v $(cd ~;pwd)/.cache:/home/user/.cache --env-file .env -p 3000:3000 -p 8000:8000 --rm oott123/novnc:1 bash
+# docker run -ti --name vnc-test -v $(cd ~;pwd)/.cache:/home/user/.cache --env-file .env -p 9000:9000 --rm docker.io/library/wechatbot:1
+# docker run -ti --name vnc-test -v $(cd ~;pwd)/.cache:/home/user/.cache --env-file .env -p 9000:9000 --rm docker.io/library/wechatbot:1
 
-# docker run --env-file .env -e torch_device=cpu -v $(cd ~;pwd)/.cache:/home/user/.cache -p 9000:9000  -p 8000:8000 --rm --name ai-test -ti docker.io/library/wechatbot:latest
-# docker run --env-file .env --gpus all -e torch_device=cuda -v $(cd ~;pwd)/.cache:/home/user/.cache -p 9000:9000  -p 8000:8000 --rm --name ai-test -ti docker.io/library/wechatbot:latest
+# docker run --env-file .env -e torch_device=cpu -v $(cd ~;pwd)/.cache:/home/user/.cache -p 9000:9000  -p 8000:8000 --rm --name ai-test -ti docker.io/library/wechatbot:1
+# docker run --env-file .env --gpus all -e torch_device=cuda -v $(cd ~;pwd)/.cache:/home/user/.cache -p 9000:9000  -p 8000:8000 --rm --name ai-test -ti docker.io/library/wechatbot:1

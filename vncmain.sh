@@ -24,9 +24,4 @@
 
 # echo $PATH
 
-# /home/python-user/.pyenv/shims/python /home/python-user/app/main.py
-
-
-# (cd /home/python-user/app && ls -lah)
-# (cd /app && npm run dev2)
-(cd /app/app && /home/python-user/.pyenv/shims/python3 -m uvicorn main-api:app --host 0.0.0.0 --port 8000)
+(cd /app/app && python3 -m uvicorn main-api:app --host 0.0.0.0 --port 8000)
