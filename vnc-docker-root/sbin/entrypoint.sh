@@ -28,32 +28,33 @@ if [ "$USER_PASSWD" != '' ]; then
     # set user password
     echo "user:$USER_PASSWD" | chpasswd
     # and give sudo power to user
-    echo '' >> /etc/sudoers
-    echo 'user  ALL=(ALL:ALL) ALL' >> /etc/sudoers
+    # echo '' >> /etc/sudoers
+    # echo 'user  ALL=(ALL:ALL) ALL' >> /etc/sudoers
 fi
 
 set +e
+
+vncsession user :11
+# tmux new -d -s tigervnc
+# tmux send-keys -t tigervnc "vncsession user :11" C-m
+sleep 2
+touch ~/.Xauthority
+xauth add `sudo --preserve-env -Hu user xauth list $DISPLAY`
+# tmux capture-pane -t tigervnc -pe # N
+tmux new -d -s nginx
+tmux send-keys -t nginx "nginx -g 'daemon off;'" C-m
+sleep 2
+tmux capture-pane -t nginx -pe # N
+tmux new -d -s websocketify
+tmux send-keys -t websocketify "sudo -Hu user /_app/src/websockify/run 9001 127.0.0.1:5911" C-m
+sleep 2
+tmux capture-pane -t websocketify -pe # N
 
 case ${1} in
   help)
     echo "No help!"
     ;;
   start)
-    vncsession user :11
-    # tmux new -d -s tigervnc
-    # tmux send-keys -t tigervnc "vncsession user :11" C-m
-    sleep 2
-    touch ~/.Xauthority
-    xauth add `sudo --preserve-env -Hu user xauth list $DISPLAY`
-    # tmux capture-pane -t tigervnc -pe # N
-    tmux new -d -s nginx
-    tmux send-keys -t nginx "nginx -g 'daemon off;'" C-m
-    sleep 2
-    tmux capture-pane -t nginx -pe # N
-    tmux new -d -s websocketify
-    tmux send-keys -t websocketify "sudo -Hu user /_app/src/websockify/run 9001 127.0.0.1:5911" C-m
-    sleep 2
-    tmux capture-pane -t websocketify -pe # N
     sudo --preserve-env --preserve-env=PATH -Hu user /app/vncmain.sh "$@"
     ;;
   *)

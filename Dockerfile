@@ -5,6 +5,7 @@ FROM nvidia/cuda:10.0-runtime-ubuntu18.04 AS novnc-node-18
 RUN rm -rf /etc/apt/sources.list.d/*
 
 ARG ALIYUN=""
+ARG GIT_MIRROR=https://ghproxy.com/
 
 ADD ./check-valid-until.txt /etc/apt/apt.conf.d/10no--check-valid-until
 
@@ -31,7 +32,7 @@ ENV LANG=C.UTF-8 \
 
 # 首先加用户，防止 uid/gid 不稳定
 RUN set -ex && \
-    groupadd user && useradd -m -g user user && \
+    groupadd user && useradd -s /bin/bash -d /home/user -m -g user user && \
     # 安装依赖和代码
     apt-get update && apt-get upgrade -y && \
     apt-get install -y \
@@ -42,22 +43,44 @@ RUN set -ex && \
         procps \
         nginx sudo \
         tmux \
-        libnss3-dev \
+        unzip \
+        libnss3-dev libasound2 \
+        build-essential libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev zlib1g-dev \
         net-tools \
         xz-utils \
         # python-numpy \
         xorg openbox rxvt-unicode
     # apt-get purge -y git wget && \
-    # apt-get autoremove -y && apt-get clean && rm -fr /tmp/* /app/src/novnc/.git /app/src/websockify/.git /var/lib/apt/lists
+    # apt-get autoremove -y && apt-get clean && rm -fr /tmp/* /_app/src/novnc/.git /_app/src/websockify/.git /var/lib/apt/lists
 
-RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -O /tmp/google-chrome-stable_current_amd64.deb && \
-  apt-get install -y /tmp/google-chrome-stable_current_amd64.deb
+
+RUN wget -O /tmp/tigervnc.tar.gz https://nchc.dl.sourceforge.net/project/tigervnc/stable/${TIGERVNC_VERSION}/tigervnc-${TIGERVNC_VERSION}.x86_64.tar.gz
+
+
+# RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -O /tmp/google-chrome-stable_current_amd64.deb && \
+#   apt-get install -y /tmp/google-chrome-stable_current_amd64.deb && rm -rf /tmp/google-chrome-stable_current_amd64.deb
+
+# https://cdn.npmmirror.com/binaries/chromium-browser-snapshots/Linux_x64/1103041/chrome-linux.zip
+# https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/Linux_x64/1103041/chrome-linux.zip
+
+# https://registry.npmmirror.com/binary.html?path=chromedriver/
+
+RUN wget 'https://cdn.npmmirror.com/binaries/chromium-browser-snapshots/Linux_x64/1103041/chrome-linux.zip' -O /tmp/chrome-linux.zip && \
+    unzip /tmp/chrome-linux.zip -d /apps/ && \
+    rm -rf /tmp/chrome-linux.zip && \
+    rm -rf /usr/bin/x-www-browser && \
+    echo '/bin/bash -c "exec /apps/chrome-linux/chrome --no-sandbox $@"' > /usr/bin/x-www-browser && \
+    chmod +x /usr/bin/x-www-browser
+
+# chrome --disable-gpu --no-sandbox
+
+# https://liquidtelecom.dl.sourceforge.net/ https://nchc.dl.sourceforge.net/
 
 RUN if [ "x$ALIYUN" != "xnone" ] ; then \
-      git config --global url."https://ghproxy.com/https://github.com".insteadOf https://github.com ; \
+      git config --global url."${GIT_MIRROR}https://github.com".insteadOf https://github.com ; \
     fi && \
     # tigervnc
-    wget -O /tmp/tigervnc.tar.gz https://nchc.dl.sourceforge.net/project/tigervnc/stable/${TIGERVNC_VERSION}/tigervnc-${TIGERVNC_VERSION}.x86_64.tar.gz && \
+    # wget -O /tmp/tigervnc.tar.gz https://liquidtelecom.dl.sourceforge.net/project/tigervnc/stable/${TIGERVNC_VERSION}/tigervnc-${TIGERVNC_VERSION}.x86_64.tar.gz && \
     tar xzf /tmp/tigervnc.tar.gz -C /tmp && \
     chown root:root -R /tmp/tigervnc-${TIGERVNC_VERSION}.x86_64 && \
     tar c -C /tmp/tigervnc-${TIGERVNC_VERSION}.x86_64 usr | tar x -C / && \
@@ -67,8 +90,8 @@ RUN if [ "x$ALIYUN" != "xnone" ] ; then \
     # novnc
     mkdir -p /_app/src && \
     git clone --depth=1 https://github.com/novnc/noVNC.git /_app/src/novnc && \
-    git clone --depth=1 https://github.com/novnc/websockify.git /_app/src/websockify
-
+    git clone --depth=1 https://github.com/novnc/websockify.git /_app/src/websockify && \
+    rm -fr /tmp/* /_app/src/novnc/.git /_app/src/websockify/.git /var/lib/apt/lists
 
 # copy files
 COPY ./vnc-docker-root /
@@ -83,28 +106,31 @@ CMD ["start"]
 # ENV NODE_VERSION v18.14.0
 ENV NODE_VERSION v16.19.0
 
-ENV NVM_DIR=/root/.nvm
+ENV NVM_DIR=/apps/.nvm
 ENV NVM_SOURCE=https://gitee.com/mirrors/nvm.git
 ENV NVM_NODEJS_ORG_MIRROR=http://npm.taobao.org/mirrors/node
 
-RUN curl -o- https://gitee.com/mirrors/nvm/raw/master/install.sh | bash
+RUN mkdir -p $NVM_DIR && chown user:user $NVM_DIR
 
-ENV PATH /root/.nvm/versions/node/$NODE_VERSION/bin:$PATH
+USER user
+
+RUN mkdir -p $NVM_DIR && curl -o- https://gitee.com/mirrors/nvm/raw/master/install.sh | bash # && chmod -R 777 $NVM_DIR
+
+ENV PATH $NVM_DIR/versions/node/$NODE_VERSION/bin:$PATH
 
 RUN node --version \
     && npm --version
 
+USER root
+
 FROM novnc-node-18 AS laststage
 
-# ARG ALIYUN=""
+RUN echo "user:password" | chpasswd && echo '' >> /etc/sudoers && echo 'user  ALL=(ALL:ALL) ALL' >> /etc/sudoers
 
-# RUN groupadd -r user && useradd -r -m -g user user
-
-# RUN echo $PATH && whoami && dfasd
-RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -y -f \
-    wget unzip curl git \
-    build-essential libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev zlib1g-dev
+# RUN apt-get update && apt-get upgrade -y && \
+#     apt-get install -y -f \
+#     wget unzip curl git \
+#     build-essential libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev zlib1g-dev
     # python3 python3-pip python3-tk
     # apt-get clean && rm -fr /tmp/* /var/lib/apt/lists
 
@@ -119,7 +145,9 @@ ENV PATH=$PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
 # # Install pyenv
 RUN set -ex \
     && if [ "x$ALIYUN" != "xnone" ] ; then \
-      (echo https://ghproxy.com/ > /tmp/HTTP_GIT_PREFIX && git config --global url."https://ghproxy.com/https://github.com".insteadOf https://github.com); \
+      (echo ${GIT_MIRROR} > /tmp/HTTP_GIT_PREFIX && git config --global url."${GIT_MIRROR}https://github.com".insteadOf https://github.com); \
+    else \
+      touch /tmp/HTTP_GIT_PREFIX; \
     fi \
     && curl "`cat /tmp/HTTP_GIT_PREFIX`https://raw.githubusercontent.com/pyenv/pyenv-installer/master/bin/pyenv-installer" | bash \
     && pyenv update \
@@ -127,7 +155,6 @@ RUN set -ex \
     && pyenv install $PYTHON_VERSION \
     && pyenv global $PYTHON_VERSION \
     && pyenv rehash
-
 
 # RUN wget https://www.python.org/ftp/python/3.11.1/Python-3.11.1.tgz && tar xzf Python-3.11.1.tgz
 # RUN cd Python-3.11.1 && ./configure --enable-optimizations
@@ -152,11 +179,15 @@ RUN if [ "x$ALIYUN" != "xnone" ] ; then \
 
 # USER root
 
+# RUN rm -rf /usr/bin/x-www-browser && echo '/bin/bash -c "exec /etc/alternatives/x-www-browser --no-sandbox $@"' > /usr/bin/x-www-browser && chmod +x /usr/bin/x-www-browser
+
 ADD package.json /app/
 
 ADD .npmrc /tmp/.npmrc2
 
 RUN if [ "x$ALIYUN" != "xnone" ] ; then mv -f /tmp/.npmrc2 /app/.npmrc; else rm -rf  /tmp/.npmrc2; fi
+
+USER user
 
 RUN npm install
 
@@ -173,14 +204,15 @@ ADD ./src /app/src
 ADD ./tsconfig.json /app/
 ADD ./rollup.config.js /app/
 COPY vncmain.sh /app/vncmain.sh
-# RUN chmod +x /app/vncmain.sh
+
+USER root
 
 # RUN npm run build
 # CMD ["node", "lib/bundle.esm.js"]
 
 # docker build . -t docker.io/library/wechatbot:1
 # docker build . -t docker.io/library/wechatbot:1 --build-arg ALIYUN=none
-# docker run -ti --name vnc-test -v $(cd ~;pwd)/.cache:/home/user/.cache --env-file .env -p 3000:3000 -p 8000:8000 --rm oott123/novnc:1 bash
+# docker run -ti --name vnc-test -v $(cd ~;pwd)/.cache:/home/user/.cache --env-file .env -p 9000:9000 -p 3000:3000 -p 8000:8000 --privileged --rm docker.io/library/wechatbot:1 bash
 # docker run -ti --name vnc-test -v $(cd ~;pwd)/.cache:/home/user/.cache --env-file .env -p 9000:9000 --rm docker.io/library/wechatbot:1
 # docker run -ti --name vnc-test -v $(cd ~;pwd)/.cache:/home/user/.cache --env-file .env -p 9000:9000 --rm docker.io/library/wechatbot:1
 
