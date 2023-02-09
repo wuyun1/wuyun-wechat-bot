@@ -167,6 +167,7 @@ EXPOSE 8000
 
 WORKDIR /app
 
+
 COPY ./requirements.txt /app/requirements.txt
 
 RUN if [ "x$ALIYUN" != "xnone" ] ; then \
@@ -182,13 +183,15 @@ RUN if [ "x$ALIYUN" != "xnone" ] ; then \
 
 # RUN rm -rf /usr/bin/x-www-browser && echo '/bin/bash -c "exec /etc/alternatives/x-www-browser --no-sandbox $@"' > /usr/bin/x-www-browser && chmod +x /usr/bin/x-www-browser
 
+RUN chown -R user:user /app && chmod 777 -R /tmp
+
+USER user
+
 ADD package.json /app/
 
 ADD .npmrc /tmp/.npmrc2
 
 RUN if [ "x$ALIYUN" != "xnone" ] ; then mv -f /tmp/.npmrc2 /app/.npmrc; else rm -rf  /tmp/.npmrc2; fi
-
-USER user
 
 RUN npm install
 
