@@ -1,5 +1,6 @@
 # FROM ubuntu AS novnc-node-18
-FROM nvidia/cuda:10.0-runtime-ubuntu18.04 AS novnc-node-18
+FROM nvidia/cuda:10.0-base-ubuntu18.04 AS novnc-node-18
+# FROM nvidia/cuda:10.0-runtime-ubuntu18.04 AS novnc-node-18
 # FROM ubuntu
 
 ARG ALIYUN=""
@@ -63,12 +64,12 @@ RUN wget -O /tmp/tigervnc.tar.gz https://nchc.dl.sourceforge.net/project/tigervn
 
 # https://registry.npmmirror.com/binary.html?path=chromedriver/
 
-RUN wget 'https://cdn.npmmirror.com/binaries/chromium-browser-snapshots/Linux_x64/1103041/chrome-linux.zip' -O /tmp/chrome-linux.zip && \
-    unzip /tmp/chrome-linux.zip -d /apps/ && \
-    rm -rf /tmp/chrome-linux.zip && \
-    rm -rf /usr/bin/x-www-browser && \
-    echo '/bin/bash -c "exec /apps/chrome-linux/chrome --no-sandbox $@"' > /usr/bin/x-www-browser && \
-    chmod +x /usr/bin/x-www-browser
+# RUN wget 'https://cdn.npmmirror.com/binaries/chromium-browser-snapshots/Linux_x64/1103041/chrome-linux.zip' -O /tmp/chrome-linux.zip && \
+#     unzip /tmp/chrome-linux.zip -d /apps/ && \
+#     rm -rf /tmp/chrome-linux.zip && \
+#     rm -rf /usr/bin/x-www-browser && \
+#     echo '/bin/bash -c "exec /apps/chrome-linux/chrome --no-sandbox $@"' > /usr/bin/x-www-browser && \
+#     chmod +x /usr/bin/x-www-browser
 
 # chrome --disable-gpu --no-sandbox
 
@@ -108,7 +109,7 @@ ENV NVM_DIR=/apps/.nvm
 ENV NVM_SOURCE=https://gitee.com/mirrors/nvm.git
 ENV NVM_NODEJS_ORG_MIRROR=http://npm.taobao.org/mirrors/node
 
-RUN mkdir -p $NVM_DIR && chown user:user $NVM_DIR
+RUN mkdir -p $NVM_DIR && chown -R user:user /apps
 
 USER user
 
@@ -116,10 +117,20 @@ RUN mkdir -p $NVM_DIR && curl -o- https://gitee.com/mirrors/nvm/raw/master/insta
 
 ENV PATH $NVM_DIR/versions/node/$NODE_VERSION/bin:$PATH
 
-RUN node --version \
-    && npm --version
+ADD .npmrc /tmp/.npmrc2
+
+RUN if [ "x$ALIYUN" != "xnone" ] ; then cp /tmp/.npmrc2 /home/user/.npmrc; else echo rm -rf  /tmp/.npmrc2; fi
+
+# RUN PUPPETEER_SKIP_DOWNLOAD=true npm i -g puppeteer && \
+#   node "$(npm config get prefix)/lib/node_modules/puppeteer/install.js" && \
+#   node -e "console.log(require(\"$(npm config get prefix)/lib/node_modules/puppeteer\").executablePath())" > /tmp/chrome_executable_path
+#   # cp -r /app/node_modules/puppeteer/.local-chromium/*/chrome-linux /apps/chrome-linux && \
 
 USER root
+
+# RUN rm -rf /usr/bin/x-www-browser && \
+#   echo '/bin/bash -c "exec '`cat /tmp/chrome_executable_path`' --no-sandbox $@"' > /usr/bin/x-www-browser && \
+#   chmod +x /usr/bin/x-www-browser
 
 FROM novnc-node-18 AS laststage
 
@@ -167,7 +178,6 @@ EXPOSE 8000
 
 WORKDIR /app
 
-
 COPY ./requirements.txt /app/requirements.txt
 
 RUN if [ "x$ALIYUN" != "xnone" ] ; then \
@@ -189,18 +199,25 @@ USER user
 
 ADD package.json /app/
 
-ADD .npmrc /tmp/.npmrc2
-
-RUN if [ "x$ALIYUN" != "xnone" ] ; then mv -f /tmp/.npmrc2 /app/.npmrc; else rm -rf  /tmp/.npmrc2; fi
+RUN if [ "x$ALIYUN" != "xnone" ] ; then cp /tmp/.npmrc2 /app/.npmrc; else echo rm -rf  /tmp/.npmrc2; fi
 
 RUN npm install
+
+USER root
+
+RUN node -e "console.log(require(\"/app/node_modules/puppeteer\").executablePath())" > /tmp/chrome_executable_path && \
+  rm -rf /usr/bin/x-www-browser && \
+  echo '/bin/bash -c "exec '`cat /tmp/chrome_executable_path`' --no-sandbox $@"' > /usr/bin/x-www-browser && \
+  chmod +x /usr/bin/x-www-browser
+
+USER user
+
 
 # # Suppress an apt-key warning about standard out not being a terminal. Use in this script is safe.
 # ENV APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=DontWarn
 # # Install latest chrome dev package and fonts to support major charsets (Chinese, Japanese, Arabic, Hebrew, Thai and a few others)
 # # Note: this installs the necessary libs to make the bundled version of Chromium that Puppeteer
 # # installs, work.
-
 
 # COPY --chown=user:user ./app /home/user/app
 ADD ./app /app/app/
@@ -222,3 +239,5 @@ USER root
 
 # docker run --env-file .env -e torch_device=cpu -v $(cd ~;pwd)/.cache:/home/user/.cache -p 9000:9000  -p 8000:8000 --rm --name ai-test -ti docker.io/library/wechatbot:1
 # docker run --env-file .env --gpus all -e torch_device=cuda -v $(cd ~;pwd)/.cache:/home/user/.cache -p 9000:9000  -p 8000:8000 --rm --name ai-test -ti docker.io/library/wechatbot:1
+
+# docker run  -e torch_device=cpu -v D:/.cache:/home/user/.cache  -p 9000:9000  -p 8000:8000 --rm --name ai-test -ti docker.io/library/wechatbot:2
