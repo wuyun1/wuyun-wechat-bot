@@ -2,10 +2,10 @@
 FROM nvidia/cuda:10.0-runtime-ubuntu18.04 AS novnc-node-18
 # FROM ubuntu
 
-RUN rm -rf /etc/apt/sources.list.d/*
-
 ARG ALIYUN=""
 ARG GIT_MIRROR=https://ghproxy.com/
+
+RUN rm -rf /etc/apt/sources.list.d/*
 
 ADD ./check-valid-until.txt /etc/apt/apt.conf.d/10no--check-valid-until
 
@@ -53,9 +53,7 @@ RUN set -ex && \
     # apt-get purge -y git wget && \
     # apt-get autoremove -y && apt-get clean && rm -fr /tmp/* /_app/src/novnc/.git /_app/src/websockify/.git /var/lib/apt/lists
 
-
 RUN wget -O /tmp/tigervnc.tar.gz https://nchc.dl.sourceforge.net/project/tigervnc/stable/${TIGERVNC_VERSION}/tigervnc-${TIGERVNC_VERSION}.x86_64.tar.gz
-
 
 # RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -O /tmp/google-chrome-stable_current_amd64.deb && \
 #   apt-get install -y /tmp/google-chrome-stable_current_amd64.deb && rm -rf /tmp/google-chrome-stable_current_amd64.deb
@@ -80,7 +78,7 @@ RUN if [ "x$ALIYUN" != "xnone" ] ; then \
       git config --global url."${GIT_MIRROR}https://github.com".insteadOf https://github.com ; \
     fi && \
     # tigervnc
-    # wget -O /tmp/tigervnc.tar.gz https://liquidtelecom.dl.sourceforge.net/project/tigervnc/stable/${TIGERVNC_VERSION}/tigervnc-${TIGERVNC_VERSION}.x86_64.tar.gz && \
+    # wget -O /tmp/tigervnc.tar.gz https://nchc.dl.sourceforge.net/project/tigervnc/stable/${TIGERVNC_VERSION}/tigervnc-${TIGERVNC_VERSION}.x86_64.tar.gz && \
     tar xzf /tmp/tigervnc.tar.gz -C /tmp && \
     chown root:root -R /tmp/tigervnc-${TIGERVNC_VERSION}.x86_64 && \
     tar c -C /tmp/tigervnc-${TIGERVNC_VERSION}.x86_64 usr | tar x -C / && \
@@ -125,6 +123,9 @@ USER root
 
 FROM novnc-node-18 AS laststage
 
+ARG ALIYUN=""
+ARG GIT_MIRROR=https://ghproxy.com/
+
 RUN echo "user:password" | chpasswd && echo '' >> /etc/sudoers && echo 'user  ALL=(ALL:ALL) ALL' >> /etc/sudoers
 
 # RUN apt-get update && apt-get upgrade -y && \
@@ -145,7 +146,7 @@ ENV PATH=$PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
 # # Install pyenv
 RUN set -ex \
     && if [ "x$ALIYUN" != "xnone" ] ; then \
-      (echo ${GIT_MIRROR} > /tmp/HTTP_GIT_PREFIX && git config --global url."${GIT_MIRROR}https://github.com".insteadOf https://github.com); \
+      (echo $GIT_MIRROR > /tmp/HTTP_GIT_PREFIX && git config --global url."${GIT_MIRROR}https://github.com".insteadOf https://github.com); \
     else \
       touch /tmp/HTTP_GIT_PREFIX; \
     fi \
