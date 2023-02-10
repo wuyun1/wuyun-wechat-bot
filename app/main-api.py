@@ -141,9 +141,17 @@ executor = ThreadPoolExecutor(2)
 @app.post('/api/generate')
 async def api_generate(q: Question, request: Request):
     """
-    curl -XPOST http://localhost:8000/api/generate \
-        -H 'Content-Type: applicaton/json' \
-        -d '{"text": "用户: 用 markdown 格式写一篇介绍 python 冒泡排序的文章\n小元: ", "max_len": 4096}'
+    curl -X 'POST' \
+    'http://localhost:8000/api/generate' \
+    -H 'accept: application/json' \
+    -H 'Content-Type: application/json' \
+    -d '{
+    "text": "用户: 用 markdown 格式写一篇介绍 python 冒泡排序的文章\n小元",
+    "max_len": 5000,
+    "temperature": 1,
+    "top_p": 0.95,
+    "sample": true
+    }'
     """
     data = await request.json()
     if 'text' not in data or not isinstance(data['text'], str):
