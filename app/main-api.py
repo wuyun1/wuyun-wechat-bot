@@ -125,6 +125,19 @@ class Question(BaseModel):
 
 from answer import answer
 
+def myanswer(dictargs):
+    return answer(
+        **dictargs
+    )
+
+# import time
+
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
+loop = asyncio.get_event_loop()
+executor = ThreadPoolExecutor(2)
+
 @app.post('/api/generate')
 async def api_generate(q: Question, request: Request):
     """
@@ -139,18 +152,36 @@ async def api_generate(q: Question, request: Request):
             'error': 'Invalid text in post data',
         }
     try:
-        ret = answer(
-            data['text'],
-            max_new_tokens = data.get('max_len', 50),
-            temperature = data.get('temperature', 1.0),
-            top_p = data.get('top_p', 0.95),
-            sample = data.get('sample', True)
-            # top_k = data.get('top_k', 50)
-        )
+
+        args = {
+            'text': data['text'],
+            'max_new_tokens': data.get('max_len', 50),
+            'temperature': data.get('temperature', 1.0),
+            'top_p': data.get('top_p', 0.95),
+            'sample': data.get('sample', True)
+        }
+
+        ret = await loop.run_in_executor(executor, myanswer, args)
+        # ret = myanswer(args)
+
         return {
             'ok': True,
             'text': ret,
         }
+
+        # ret = answer(
+        #     data['text'],
+        #     max_new_tokens = data.get('max_len', 50),
+        #     temperature = data.get('temperature', 1.0),
+        #     top_p = data.get('top_p', 0.95),
+        #     sample = data.get('sample', True)
+        #     # top_k = data.get('top_k', 50)
+        # )
+        # return {
+        #     'ok': True,
+        #     'text': ret,
+        # }
+
     except Exception:
         return {
             'ok': False,

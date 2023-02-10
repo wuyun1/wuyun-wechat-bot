@@ -24,11 +24,11 @@ def preprocess(text):
 def postprocess(text):
     return text.replace("\\n", "\n").replace("\\t", "\t")
 
-def answer(text, sample=True, top_p=1, temperature=0.7, max_new_tokens=4096):
+def answer(text="", sample=True, top_p=1, temperature=0.7, max_new_tokens=4096):
     '''sample：是否抽样。生成任务，可以设置为True;
     top_p：0-1之间，生成的内容越多样'''
     text = preprocess(text)
-    encoding = tokenizer(text=[text], truncation=True, padding=True, max_length=768, return_tensors="pt").to(device) 
+    encoding = tokenizer(text=[text], truncation=True, padding=True, max_length=768, return_tensors="pt").to(device)
     if not sample:
         out = model.generate(**encoding, return_dict_in_generate=True, output_scores=False, max_new_tokens=max_new_tokens, num_beams=1, length_penalty=0.6)
     else:
@@ -40,6 +40,6 @@ if __name__ == "__main__":
     input_text= "用 markdown 格式写一篇介绍 python 实现冒泡排序的文章"
     print(f"示例".center(50, "="))
     input_text = "用户：" + input_text + "\n小元："
-    output_text = answer(input_text, sample=True)
+    output_text = answer(text=input_text, sample=True)
     # print(output_text)
     print(f"{input_text}\n{output_text}")
