@@ -137,6 +137,9 @@ FROM novnc-node-18 AS laststage
 ARG ALIYUN=""
 ARG GIT_MIRROR=https://ghproxy.com/
 
+# 免输入密码
+# user ALL=(ALL) NOPASSWD:ALL
+
 RUN echo "user:password" | chpasswd && echo '' >> /etc/sudoers && echo 'user  ALL=(ALL:ALL) ALL' >> /etc/sudoers
 
 # RUN apt-get update && apt-get upgrade -y && \

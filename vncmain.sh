@@ -24,4 +24,7 @@
 
 # echo $PATH
 
-(cd /app/app && python3 -m uvicorn main-api:app --host 0.0.0.0 --port 8000)
+tmux new -d -s text-api
+tmux send-keys -t text-api "cd /app/app && python3 -m uvicorn main-api:app --host 0.0.0.0 --port 8000" C-m
+
+(cd /app && npm run dev2)
