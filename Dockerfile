@@ -243,4 +243,4 @@ USER root
 # docker run --env-file .env -e torch_device=cpu -v $(cd ~;pwd)/.cache:/home/user/.cache -p 9000:9000  -p 8000:8000 --rm --name ai-test -ti docker.io/library/wechatbot:1
 # docker run --env-file .env --gpus all -e torch_device=cuda -v $(cd ~;pwd)/.cache:/home/user/.cache -p 9000:9000  -p 8000:8000 --rm --name ai-test -ti docker.io/library/wechatbot:1
 
-# docker run  -e torch_device=cpu -v D:/.cache:/home/user/.cache  -p 9000:9000  -p 8000:8000 --rm --name ai-test -ti docker.io/library/wechatbot:2
+# docker run  -e torch_device=cpu -v D:/.cache:/home/user/.cache  -p 9000:9000  -p 8000:8000 --rm --name ai-test -ti docker.io/library/wechatbot:1
