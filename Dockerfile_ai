@@ -28,7 +28,7 @@ ENV LANG=C.UTF-8 \
     TIGERVNC_VERSION=1.12.0 \
     LANGUAGE=C.UTF-8
 
-RUN apt update -y && apt upgrade -y && apt autoclean -y && apt clean -y && apt install -y sudo vim && apt install -y libx11-xcb1 && apt-get autoremove -y && apt-get clean && apt install -y libgl1-mesa-glx && apt-get clean && rm -fr /tmp/* /var/lib/apt/lists /home/user/.cache/pip/ /root/.cache
+RUN apt update -y && apt upgrade -y && apt autoclean -y && apt clean -y && apt install -y cmake sudo vim && apt install -y libx11-xcb1 && apt-get autoremove -y && apt-get clean && apt install -y libgl1-mesa-glx && apt-get clean && rm -fr /tmp/* /var/lib/apt/lists /home/user/.cache/pip/ /root/.cache
 
 RUN groupadd user && useradd -s /bin/bash -d /home/user -m -g user user && echo "user:password" | chpasswd && echo '' >> /etc/sudoers && echo 'user  ALL=(ALL:ALL) ALL' >> /etc/sudoers
 
