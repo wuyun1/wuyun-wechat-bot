@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Chatbot</title>
+</head>
+
+<body>
+  <h1>Chatbot</h1>
+  <div id="chatlog"></div>
+  <form>
+    <textarea id="input" cols="50" rows="5">用户: 写首诗
+小元:</textarea>
+    <button type="submit" id="submit">Send</button>
+  </form>
+  <script>
+    const chatlog = document.getElementById("chatlog");
+    const input = document.getElementById("input");
+    const submit = document.getElementById("submit");
+
+    const sendMessage = async () => {
+      const text = input.value;
+      if (text.trim() !== "") {
+        input.value = "";
+
+        const response = await fetch("/generate_text_async", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: text, max_new_tokens: 50 }),
+        });
+
+        const userbox = document.createElement('pre');
+        userbox.innerText = `User: ${text}`
+        chatlog.appendChild(userbox);
+
+        const reader = response.body.getReader();
+
+        const chatbox = document.createElement('pre');
+        chatbox.innerText = `Bot: `
+        chatlog.appendChild(chatbox);
+
+        let result = [];
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = new TextDecoder("utf-8").decode(value);
+          result.push(chunk);
+          chatbox.innerText = `Bot: ${result.join('')}`
+        }
+      }
+    };
+
+    input.addEventListener("keydown", function (event) {
+      if (event.keyCode === 13) {
+        if ((event.ctrlKey || event.metaKey)) {
+          input.value += '\n';
+          return;
+        }
+        // 阻止默认的回车事件
+        event.preventDefault();
+        // 调用您想要的函数
+        sendMessage();
+      }
+    });
+
+    submit.addEventListener("click", (event) => {
+      event.preventDefault();
+      sendMessage();
+    });
+  </script>
+</body>
+
+</html>

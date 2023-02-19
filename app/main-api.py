@@ -10,7 +10,7 @@ def sleep(seconds: int = 1):
 # from typing import List
 
 from fastapi import FastAPI, File, UploadFile, Response, status, Request
-from fastapi.responses import HTMLResponse,FileResponse
+from fastapi.responses import HTMLResponse,FileResponse, StreamingResponse
 
 app = FastAPI()
 
@@ -86,17 +86,17 @@ async def create_upload_files(
     return respose
 
 
-@app.get("/")
-async def main():
-    content = """
-<body>
-<form action="/pdf-to-word" enctype="multipart/form-data" method="post">
-<input name="file" type="file" >
-<input type="submit">
-</form>
-</body>
-    """
-    return HTMLResponse(content=content)
+# @app.get("/")
+# async def main():
+#     content = """
+# <body>
+# <form action="/pdf-to-word" enctype="multipart/form-data" method="post">
+# <input name="file" type="file" >
+# <input type="submit">
+# </form>
+# </body>
+#     """
+#     return HTMLResponse(content=content)
 
 
 # import uvicorn
@@ -115,7 +115,7 @@ from pydantic import BaseModel
 
 
 class Question(BaseModel):
-    text: str = "你好啊"
+    text: str = "用户: 写首诗\n小元: "
     # description: Union[str, None] = None
     max_len: Union[float, None] = 50
     temperature: Union[float, None] = 1.0
@@ -123,20 +123,17 @@ class Question(BaseModel):
     sample: Union[None, bool] = True
 
 
-from answer import answer
+from answer import answer, async_answer
+import asyncio
 
 def myanswer(dictargs):
-    return answer(
+    return asyncio.run(answer(
         **dictargs
-    )
+    ))
 
-# import time
+from utils import global_executor
 
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
-
-loop = asyncio.get_event_loop()
-executor = ThreadPoolExecutor(2)
 
 @app.post('/api/generate')
 async def api_generate(q: Question, request: Request):
@@ -169,7 +166,8 @@ async def api_generate(q: Question, request: Request):
             'sample': data.get('sample', True)
         }
 
-        ret = await loop.run_in_executor(executor, myanswer, args)
+        global_loop = asyncio.get_event_loop()
+        ret = await global_loop.run_in_executor(global_executor, myanswer, args)
         # ret = myanswer(args)
 
         return {
@@ -177,28 +175,39 @@ async def api_generate(q: Question, request: Request):
             'text': ret,
         }
 
-        # ret = answer(
-        #     data['text'],
-        #     max_new_tokens = data.get('max_len', 50),
-        #     temperature = data.get('temperature', 1.0),
-        #     top_p = data.get('top_p', 0.95),
-        #     sample = data.get('sample', True)
-        #     # top_k = data.get('top_k', 50)
-        # )
-        # return {
-        #     'ok': True,
-        #     'text': ret,
-        # }
-
     except Exception:
         return {
             'ok': False,
             'error': traceback.format_exc(),
         }
 
-
-@app.get('/')
-async def hello():
-    return {
-        'hello': 'world',
+async def generate_text_async(request: Question):
+    generation_params = {
+        "text": request.text,
+        "max_new_tokens": request.max_len,
+        "sample": request.sample,
+        # "top_k": 50,
+        "top_p": request.top_p,
+        "temperature": request.temperature
     }
+
+    async for token in async_answer(**generation_params):
+        yield str(token)
+
+
+@app.post("/generate_text_async")
+async def generate_text(text_request: Question):
+    return StreamingResponse(generate_text_async(text_request), media_type="text/event-stream")
+
+
+@app.get("/", response_class=HTMLResponse)
+async def index():
+    with open("chatbot.html", "r") as f:
+        html = f.read()
+    return html
+
+
+import uvicorn
+
+if __name__ == "__main__":
+    uvicorn.run("main-api:app", host="0.0.0.0", port=3000, reload=True)
