@@ -15,5 +15,8 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build the Docker image
-      run: docker build . --file Dockerfile_ai --build-arg ALIYUN=none --squash --tag docker.io/jonneywu/wechatbot:latest
+      run: |
+        docker build . --file Dockerfile_ai --build-arg ALIYUN=none --tag docker.io/jonneywu/wechatbot:latest
+        docker login docker.io --password ${DOCKER_PASSWORD} --username ${DOCKER_USER}
+        docker push docker.io/jonneywu/wechatbot:latest
 
