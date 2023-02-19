@@ -1,5 +1,8 @@
+from typing import Any
 from transformers import T5Tokenizer, AutoTokenizer, T5ForConditionalGeneration,GPTNeoXForCausalLM, AutoModel,GPTNeoXTokenizerFast,LogitsProcessorList, StoppingCriteriaList
 
+# import os
+# os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 MODEL_NAME="ClueAI/ChatYuan-large-v1"
 MODEL_CLASS=T5ForConditionalGeneration
@@ -72,7 +75,7 @@ def answer(text="", sample=True, top_p=1, temperature=0.7, max_new_tokens=4096, 
 from utils import global_executor
 import asyncio
 import time
-
+from fastapi import Request
 
 async def async_answer(
     text: str,
@@ -80,24 +83,30 @@ async def async_answer(
     top_p: float = 1,
     temperature: float = 0.7,
     max_new_tokens: int = 4096,
+    request: Request = None,
 ):
     """生成对话"""
     encoding = tokenizer(
         text=[preprocess(text)], truncation=True, max_length=768, return_tensors="pt"
     ).to(device)
 
+    queue = asyncio.Queue()
     global_loop = asyncio.get_event_loop()
 
-    queue = asyncio.Queue()
-
+    request.state.is_close = False
 
     def my_prefix_allowed_tokens_fn(_, input_ids):
+        if request is not None:
+            request.state.is_close = asyncio.run(request.is_disconnected())
+            if request.state.is_close:
+                queue.put_nowait(None)
+                raise asyncio.CancelledError()
+
         if len(input_ids) > len(encoding.input_ids):
             chunk = input_ids[-2:-1]
-            # queue.put_nowait(chunk)
+            # print(chunk[0])
             global_loop.call_soon_threadsafe(queue.put_nowait, chunk)
-            # await queue.put(chunk)
-            # time.sleep(.02)
+            time.sleep(0)
 
     args = {
         **encoding,
@@ -123,10 +132,7 @@ async def async_answer(
     async def do_consumer():
         while True:
             try:
-                # result = [0]
-                # await asyncio.sleep(1)
                 result = await queue.get()
-                # result = queue.get_nowait()
                 queue.task_done()
 
                 if result is None:
@@ -149,14 +155,18 @@ async def async_answer(
 
     out_feature = global_loop.run_in_executor(global_executor, _generate, args)
 
+
     async for result in do_consumer_feat:
         yield result
         # do_consumer_feat.athrow(Exception, "取消")
 
-    query_join_feat = queue.join()
-    out = await out_feature
+    join_feat = queue.join()
 
-    await query_join_feat
+    await out_feature
+    await join_feat
+    # await asyncio.gather(out_feature, join_feat)
+
+    # out = await out_feature
 
     # res_sequences = out["sequences"]
     # if MODEL_NAME == "EleutherAI/pythia-70m-deduped":
@@ -176,11 +186,11 @@ async def main():
     async for result in async_answer(text=input_text, sample=True, max_new_tokens=40):
         print(result, end="")
 
-    print(f"示例2".center(50, "="))
-    # input_text= "hello baby"
+    # print(f"示例2".center(50, "="))
+    # # input_text= "hello baby"
 
-    output_text = answer(text=input_text, sample=True, max_new_tokens=40)
-    print(f"{input_text}{output_text}")
+    # output_text = answer(text=input_text, sample=True, max_new_tokens=40)
+    # print(f"{input_text}{output_text}")
 
 if __name__ == "__main__":
     asyncio.run(main())

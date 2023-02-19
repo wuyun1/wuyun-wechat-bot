@@ -109,7 +109,7 @@ async def create_upload_files(
 # cd app && uvicorn main-api:app --host 0.0.0.0 --port 8000 --reload
 
 import traceback
-from typing import Union
+from typing import Any, Union
 
 from pydantic import BaseModel
 
@@ -179,14 +179,15 @@ async def api_generate(q: Question, request: Request):
             'error': traceback.format_exc(),
         }
 
-async def generate_text_async(request: Question):
+async def generate_text_async(q: Question, request: Any = None):
     generation_params = {
-        "text": request.text,
-        "max_new_tokens": request.max_len,
-        "sample": request.sample,
+        "text": q.text,
+        "max_new_tokens": q.max_len,
+        "sample": q.sample,
         # "top_k": 50,
-        "top_p": request.top_p,
-        "temperature": request.temperature
+        "top_p": q.top_p,
+        "request": request,
+        "temperature": q.temperature
     }
 
     async for token in async_answer(**generation_params):
@@ -194,8 +195,8 @@ async def generate_text_async(request: Question):
 
 
 @app.post("/generate_text_async")
-async def generate_text(text_request: Question):
-    return StreamingResponse(generate_text_async(text_request), media_type="text/event-stream")
+async def generate_text(text_request: Question, request: Request):
+    return StreamingResponse(generate_text_async(text_request, request=request), media_type="text/event-stream")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -204,6 +205,12 @@ async def index():
         html = f.read()
     return html
 
+@app.exception_handler(BrokenPipeError)
+async def handle_broken_pipe(request, exc):
+    print(request)
+    print(exc)
+    # do some cleanup work if needed
+    pass
 
 import uvicorn
 
