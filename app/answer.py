@@ -1,48 +1,53 @@
+from utils import global_executor
+from fastapi import Request
+import time
+import asyncio
+import os
+import torch
+from transformers.generation.utils import (logging)
 from typing import Any
-from transformers import T5Tokenizer, AutoTokenizer, T5ForConditionalGeneration,GPTNeoXForCausalLM, AutoModel,GPTNeoXTokenizerFast,LogitsProcessorList, StoppingCriteriaList
+from transformers import T5Tokenizer, AutoTokenizer, T5ForConditionalGeneration, GPTNeoXForCausalLM, AutoModel, GPTNeoXTokenizerFast, LogitsProcessorList, StoppingCriteriaList
 
 # import os
 # os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-MODEL_NAME="ClueAI/ChatYuan-large-v1"
-MODEL_CLASS=T5ForConditionalGeneration
+MODEL_NAME = "ClueAI/ChatYuan-large-v1"
+MODEL_CLASS = T5ForConditionalGeneration
 
 # MODEL_NAME="EleutherAI/pythia-70m-deduped"
 # MODEL_CLASS=GPTNeoXForCausalLM
 
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
-from transformers.generation.utils import (logging)
-
-import torch
 
 logger = logging.get_logger(__name__)
 
 model = MODEL_CLASS.from_pretrained(
-  MODEL_NAME,
+    MODEL_NAME,
 )
 
-import torch
-import os
 
 torch_device = os.environ.get('torch_device', 'cpu')
 device = torch.device(torch_device)
 
 model.to(device)
 
+
 def preprocess(text):
     text = text.replace("\n", "\\n").replace("\t", "\\t")
     return text
+
 
 def postprocess(text):
     return text.replace("\\n", "\n").replace("\\t", "\t")
 
 
-def answer(text="", sample=True, top_p=1, temperature=0.7, max_new_tokens=4096, encoding = None):
+def answer(text="", sample=True, top_p=1, temperature=0.7, max_new_tokens=4096, encoding=None):
     '''sample：是否抽样。生成任务，可以设置为True;
     top_p：0-1之间，生成的内容越多样'''
 
-    encoding = encoding is not None if encoding else tokenizer(text=[preprocess(text)], truncation=True, max_length=768, return_tensors="pt").to(device)  # padding=True,
+    encoding = encoding is not None if encoding else tokenizer(text=[preprocess(
+        text)], truncation=True, max_length=768, return_tensors="pt").to(device)  # padding=True,
 
     if not sample:
         out = model.generate(
@@ -72,10 +77,6 @@ def answer(text="", sample=True, top_p=1, temperature=0.7, max_new_tokens=4096, 
     # res = res.replace(text, "", 1)
     return res
 
-from utils import global_executor
-import asyncio
-import time
-from fastapi import Request
 
 async def async_answer(
     text: str,
@@ -93,7 +94,7 @@ async def async_answer(
     queue = asyncio.Queue()
     global_loop = asyncio.get_event_loop()
 
-    request.state.is_close = False
+    # request.state.is_close = False
 
     def my_prefix_allowed_tokens_fn(_, input_ids):
         if request is not None:
@@ -154,7 +155,6 @@ async def async_answer(
         return res
 
     out_feature = global_loop.run_in_executor(global_executor, _generate, args)
-
 
     async for result in do_consumer_feat:
         yield result

@@ -4,8 +4,12 @@ pdf2docx==0.5.6
 python-multipart==0.0.5
 torch
 
-torchvision
-torchaudio
+# torchvision
+# torchaudio
 sentencepiece
 
 pydantic
+
+
+protobuf==3.20
+# tensorboardX

@@ -1,7 +1,22 @@
+import os
+from fastapi.responses import HTMLResponse, FileResponse, StreamingResponse
+from fastapi import FastAPI, File, UploadFile, Response, status, Request
+import uvicorn
+from utils import global_executor
+import asyncio
+from answer import answer, async_answer
+from pydantic import BaseModel
+from typing import Any, Union
+import traceback
+import threading
+import string
+import random
+from pdf import pdf_to_word
 import logging
 import time
 
 logging.basicConfig(level=logging.INFO)
+
 
 def sleep(seconds: int = 1):
     logging.info(f"Sleeping for {seconds} seconds")
@@ -9,10 +24,9 @@ def sleep(seconds: int = 1):
 
 # from typing import List
 
-from fastapi import FastAPI, File, UploadFile, Response, status, Request
-from fastapi.responses import HTMLResponse,FileResponse, StreamingResponse
 
 app = FastAPI()
+
 
 @app.get("/test")
 async def test(response: Response):
@@ -21,23 +35,17 @@ async def test(response: Response):
     return {"status": "error", "error": "Forbidden"}
 
 
-from pdf import pdf_to_word
-
-import random
-import string
-
 def random_string(letter_count, digit_count):
-    str1 = ''.join((random.choice(string.ascii_letters) for x in range(letter_count)))
+    str1 = ''.join((random.choice(string.ascii_letters)
+                   for x in range(letter_count)))
     str1 += ''.join((random.choice(string.digits) for x in range(digit_count)))
 
-    sam_list = list(str1) # it converts the string to list.
-    random.shuffle(sam_list) # It uses a random.shuffle() function to shuffle the string.
+    sam_list = list(str1)  # it converts the string to list.
+    # It uses a random.shuffle() function to shuffle the string.
+    random.shuffle(sam_list)
     final_string = ''.join(sam_list)
     return final_string
 
-import os
-
-import threading
 
 @app.post("/pdf-to-word")
 async def create_upload_files(
@@ -56,9 +64,9 @@ async def create_upload_files(
 
     file_name = os.path.basename(pdf_file_name)
 
-    random_s = "pdf-to-word-" + random_string(8,4)
+    random_s = "pdf-to-word-" + random_string(8, 4)
 
-    pdf_file_path = os.path.join(temp_dir, random_s + pdf_file_name )
+    pdf_file_path = os.path.join(temp_dir, random_s + pdf_file_name)
     word_file_name = file_name + '.docx'
     word_file_path = os.path.join(temp_dir, random_s + word_file_name)
 
@@ -81,7 +89,6 @@ async def create_upload_files(
     t = threading.Thread(target=my_func)
 
     t.start()
-
 
     return respose
 
@@ -108,11 +115,6 @@ async def create_upload_files(
 
 # cd app && uvicorn main-api:app --host 0.0.0.0 --port 8000 --reload
 
-import traceback
-from typing import Any, Union
-
-from pydantic import BaseModel
-
 
 class Question(BaseModel):
     text: str = "用户: 写首诗\n小元: "
@@ -123,15 +125,11 @@ class Question(BaseModel):
     sample: Union[None, bool] = True
 
 
-from answer import answer, async_answer
-import asyncio
-
-from utils import global_executor
-
 def myanswer(dictargs):
     return answer(
         **dictargs
     )
+
 
 @app.post('/api/generate')
 async def api_generate(q: Question, request: Request):
@@ -179,6 +177,7 @@ async def api_generate(q: Question, request: Request):
             'error': traceback.format_exc(),
         }
 
+
 async def generate_text_async(q: Question, request: Any = None):
     generation_params = {
         "text": q.text,
@@ -194,16 +193,22 @@ async def generate_text_async(q: Question, request: Any = None):
         yield str(token)
 
 
-@app.post("/generate_text_async")
+@app.post("/api/generate_text_async")
 async def generate_text(text_request: Question, request: Request):
     return StreamingResponse(generate_text_async(text_request, request=request), media_type="text/event-stream")
 
 
+current_path = os.path.dirname(os.path.abspath(__file__))
+
+chatbot_html_file_path = os.path.join(os.getcwd(), "chatbot.html")
+
+
 @app.get("/", response_class=HTMLResponse)
 async def index():
-    with open("chatbot.html", "r") as f:
+    with open(chatbot_html_file_path, "r") as f:
         html = f.read()
     return html
+
 
 @app.exception_handler(BrokenPipeError)
 async def handle_broken_pipe(request, exc):
@@ -212,7 +217,6 @@ async def handle_broken_pipe(request, exc):
     # do some cleanup work if needed
     pass
 
-import uvicorn
 
 if __name__ == "__main__":
     uvicorn.run("main-api:app", host="0.0.0.0", port=3000, reload=True)

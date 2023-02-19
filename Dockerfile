@@ -3,9 +3,6 @@ FROM nvidia/cuda:10.0-base-ubuntu18.04 AS novnc-node-18
 # FROM nvidia/cuda:10.0-runtime-ubuntu18.04 AS novnc-node-18
 # FROM ubuntu
 
-ARG ALIYUN=""
-ARG GIT_MIRROR=https://ghproxy.com/
-
 RUN rm -rf /etc/apt/sources.list.d/*
 
 ADD ./check-valid-until.txt /etc/apt/apt.conf.d/10no--check-valid-until

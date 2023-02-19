@@ -51,7 +51,7 @@
         }
 
 
-        const response = await fetch("/generate_text_async", {
+        const response = await fetch("/api/generate_text_async", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text: text, max_len: +(max_len.value) || 50 }),

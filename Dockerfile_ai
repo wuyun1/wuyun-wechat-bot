@@ -1,0 +1,78 @@
+FROM python
+
+ARG ALIYUN=""
+ARG INSTALL_MODEL=""
+ARG GIT_MIRROR=https://ghproxy.com/
+
+
+RUN rm -rf /etc/apt/sources.list.d/*
+
+ADD ./check-valid-until.txt /etc/apt/apt.conf.d/10no--check-valid-until
+
+ADD ./sources-debian.list /tmp/sources.list.1
+
+RUN if [ "x$ALIYUN" != "xnone" ] ; then mv -f /tmp/sources.list.1 /etc/apt/sources.list ; else rm -rf /tmp/sources.list.1 ; fi
+
+# 各种环境变量
+ENV LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    S6_BEHAVIOUR_IF_STAGE2_FAILS=2 \
+    S6_CMD_ARG0=/sbin/entrypoint.sh \
+    DEBIAN_FRONTEND=noninteractive \
+    CHROMIUM_FLAGS="--no-sandbox" \
+    VNC_GEOMETRY=800x600 \
+    VNC_PASSWD=MAX8char \
+    DISPLAY=:11 \
+    USER_PASSWD=abc1234 \
+    GIT_SSL_NO_VERIFY=1 \
+    TIGERVNC_VERSION=1.12.0 \
+    LANGUAGE=C.UTF-8
+
+RUN apt update -y
+RUN apt upgrade -y
+# RUN apt --fix-broken -y install
+RUN apt autoclean -y && apt clean -y
+RUN apt install -y aptitude sudo vim
+RUN aptitude install -y libgl1-mesa-glx libx11-xcb1
+
+RUN groupadd user && useradd -s /bin/bash -d /home/user -m -g user user && echo "user:password" | chpasswd && echo '' >> /etc/sudoers && echo 'user  ALL=(ALL:ALL) ALL' >> /etc/sudoers
+
+COPY ./requirements.txt /app/requirements.txt
+
+RUN set -ex \
+    && if [ "x$ALIYUN" != "xnone" ] ; then \
+      (echo $GIT_MIRROR > /tmp/HTTP_GIT_PREFIX && git config --global url."${GIT_MIRROR}https://github.com".insteadOf https://github.com); \
+    else \
+      touch /tmp/HTTP_GIT_PREFIX; \
+    fi
+
+RUN if [ "x$ALIYUN" != "xnone" ] ; then \
+      (python3 -m pip install --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple && python3 -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple); \
+    else \
+      python3 -m pip install --upgrade pip; \
+    fi && \
+    git clone --depth=1 https://github.com/huggingface/transformers.git && python3 -m pip install ./transformers && rm -rf transformers && \
+    # python3 -m pip install transformers && \
+    python3 -m pip install --upgrade --force-reinstall -r /app/requirements.txt
+
+
+# RUN sed -i "s|http://deb.debian.org/debian|http://mirror.sjtu.edu.cn/debian|g" /etc/apt/sources.list
+
+USER user
+
+ADD ./app /app/app/
+
+RUN if [ "x$INSTALL_MODEL" != "xnone" ] ; then python /app/app/answer.py; fi
+
+CMD ["python", "/app/app/main-api.py"]
+
+# docker build . -t docker.io/jonneywu/wechatbot:1 -f Dockerfile_ai  --squash
+# docker build . -t docker.io/jonneywu/wechatbot:1 -f Dockerfile_ai --build-arg INSTALL_MODEL=none  --squash
+# docker build . -t docker.io/jonneywu/wechatbot:1 -f Dockerfile_ai --build-arg ALIYUN=none
+# docker run -ti --name vnc-test -v $(cd ~;pwd)/.cache:/home/user/.cache -p 3000:3000 --rm docker.io/jonneywu/wechatbot:1 bash
+# docker run -ti --name vnc-test -v $(cd ~;pwd)/.cache:/home/user/.cache --rm docker.io/jonneywu/wechatbot:1
+
+# docker run -e torch_device=cpu -v $(cd ~;pwd)/.cache:/home/user/.cache -p 9000:9000  -p 8000:8000 --rm --name ai-test -ti docker.io/jonneywu/wechatbot:1
+# docker run --gpus all -e torch_device=cuda -v $(cd ~;pwd)/.cache:/home/user/.cache -p 9000:9000  -p 8000:8000 --rm --name ai-test -ti docker.io/jonneywu/wechatbot:1
+
+# docker run  -e torch_device=cpu -v D:/.cache:/home/user/.cache  -p 9000:9000  -p 8000:8000 --rm --name ai-test -ti docker.io/jonneywu/wechatbot:1

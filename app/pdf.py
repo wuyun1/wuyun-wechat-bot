@@ -62,4 +62,4 @@ if __name__ == "__main__":
     main()
 
 
-# python ./app/main.py ./pdf/aaa.pdf '/Users/wuyun/temp/ChatGPT-wechat-bot/word/aaa.docx'
+# python ./app/pdf.py ./pdf/aaa.pdf '/Users/wuyun/temp/ChatGPT-wechat-bot/word/aaa.docx'
