@@ -26,3 +26,5 @@ VITS-Paimon
 pythia-70m-deduped
 
 venv
+
+models--ClueAI--ChatYuan-large-v1

@@ -54,15 +54,15 @@ RUN if [ "x$ALIYUN" != "xnone" ] ; then \
     # python3 -m pip install transformers && \
     python3 -m pip install --upgrade --force-reinstall -r /app/requirements.txt
 
-RUN aptitude install -y libgl1-mesa-glx libx11-xcb1
-
-# RUN sed -i "s|http://deb.debian.org/debian|http://mirror.sjtu.edu.cn/debian|g" /etc/apt/sources.list
+RUN aptitude install -y libgl1-mesa-glx libx11-xcb1 && apt-get autoremove -y && apt-get clean && rm -fr /tmp/* /var/lib/apt/lists /home/user/.cache/pip/ /root/.cache
 
 USER user
 
 ADD ./app /app/app/
 
 RUN if [ "x$INSTALL_MODEL" != "xnone" ] ; then python /app/app/answer.py; fi
+
+# ADD ./models--ClueAI--ChatYuan-large-v1 /home/user/.cache/huggingface/hub/models--ClueAI--ChatYuan-large-v1/
 
 CMD ["python", "/app/app/main-api.py"]
 
