@@ -10,31 +10,76 @@
   <h1>Chatbot</h1>
   <div id="chatlog"></div>
   <form>
-    <textarea id="input" cols="50" rows="5">用户: 写首诗
-小元:</textarea>
+    <label for="story_mode">续写模式: </label><input type="checkbox" id="story_mode" checked="true" /> |
+    <label for="max_len">续写长度: </label><input type="number" id="max_len" value="40" checked="true" /> |
+    <label for="qa_mode">自动拼接问答模式: </label><input type="checkbox" id="qa_mode" checked="true"><br />
+    <label for="input">content:</label><br /><textarea id="input" cols="120" rows="15">你好</textarea>
     <button type="submit" id="submit">Send</button>
   </form>
   <script>
+
+
     const chatlog = document.getElementById("chatlog");
     const input = document.getElementById("input");
     const submit = document.getElementById("submit");
+    const story_mode = document.getElementById("story_mode");
+    const qa_mode = document.getElementById("qa_mode");
+    const max_len = document.getElementById("max_len");
 
     const sendMessage = async () => {
-      const text = input.value;
-      if (text.trim() !== "") {
-        input.value = "";
+
+      let text = input.value;
+
+      if (text.trim() === "") {
+        return;
+      }
+      try {
+        input.disabled = true;
+        submit.disabled = true;
+
+        // input.value = "";
+
+        if (qa_mode.checked && !(text.startsWith('用户:'))) {
+          text = `用户:${text}`
+          input.value = text
+        }
+
+        if (qa_mode.checked && !(text.endsWith('小元:') || text.endsWith('小元：'))) {
+          text += "\n小元:"
+          input.value = text
+        }
 
         const response = await fetch("/generate_text_async", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: text, max_new_tokens: 50 }),
+          body: JSON.stringify({ text: text, max_len: +(max_len.value) || 50 }),
         });
+
+        const reader = response.body.getReader();
+
+        if (story_mode.checked) {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const chunk = new TextDecoder("utf-8").decode(value);
+            text += chunk
+            input.value = text
+          }
+          if (qa_mode.checked) {
+            text += "\n用户:"
+            input.value = text
+          }
+          setTimeout(() => {
+            input.focus();
+            input.selectionStart = input.selectionEnd = input.value.length;
+          }, 0);
+          return;
+        }
 
         const userbox = document.createElement('pre');
         userbox.innerText = `User: ${text}`
         chatlog.appendChild(userbox);
 
-        const reader = response.body.getReader();
 
         const chatbox = document.createElement('pre');
         chatbox.innerText = `Bot: `
@@ -48,6 +93,11 @@
           result.push(chunk);
           chatbox.innerText = `Bot: ${result.join('')}`
         }
+      } catch (e) {
+        console.error(e)
+      } finally {
+        input.disabled = false;
+        submit.disabled = false;
       }
     };
 
@@ -66,7 +116,8 @@
 
     submit.addEventListener("click", (event) => {
       event.preventDefault();
-      sendMessage();
+      sendMessage().then(() => {
+      });
     });
   </script>
 </body>

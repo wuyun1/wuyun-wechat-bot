@@ -126,14 +126,12 @@ class Question(BaseModel):
 from answer import answer, async_answer
 import asyncio
 
-def myanswer(dictargs):
-    return asyncio.run(answer(
-        **dictargs
-    ))
-
 from utils import global_executor
 
-import asyncio
+def myanswer(dictargs):
+    return answer(
+        **dictargs
+    )
 
 @app.post('/api/generate')
 async def api_generate(q: Question, request: Request):

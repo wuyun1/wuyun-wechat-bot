@@ -97,7 +97,7 @@ async def async_answer(
             # queue.put_nowait(chunk)
             global_loop.call_soon_threadsafe(queue.put_nowait, chunk)
             # await queue.put(chunk)
-            time.sleep(.02)
+            # time.sleep(.02)
 
     args = {
         **encoding,
@@ -158,13 +158,11 @@ async def async_answer(
 
     await query_join_feat
 
-    res_sequences = out["sequences"]
-    if MODEL_NAME == "EleutherAI/pythia-70m-deduped":
-        res_sequences = [out["sequences"][0][len(encoding["input_ids"][0]):]]
+    # res_sequences = out["sequences"]
+    # if MODEL_NAME == "EleutherAI/pythia-70m-deduped":
+    #     res_sequences = [out["sequences"][0][len(encoding["input_ids"][0]):]]
 
-    yield postprocess(tokenizer.decode(res_sequences[0][-1]))
-
-
+    # yield postprocess(tokenizer.decode(res_sequences[0][-1]))
 
 
 async def main():
