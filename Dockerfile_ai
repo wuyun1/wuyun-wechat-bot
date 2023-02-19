@@ -68,6 +68,8 @@ ENV MODEL_CLASS=T5ForConditionalGeneration
 ENV MODEL_TOKENIZER=AutoTokenizer
 ENV torch_device=cpu
 
+WORKDIR /app/app
+
 # docker build . -t docker.io/jonneywu/wechatbot:1 -f Dockerfile_ai  --squash
 # docker build . -t docker.io/jonneywu/wechatbot:1 -f Dockerfile_ai --build-arg INSTALL_MODEL=none  --squash
 # docker build . -t docker.io/jonneywu/wechatbot:1 -f Dockerfile_ai --build-arg ALIYUN=none
