@@ -48,7 +48,8 @@ RUN if [ "x$ALIYUN" != "xnone" ] ; then \
     fi && \
     git clone --depth=1 https://github.com/huggingface/transformers.git && python3 -m pip install ./transformers && rm -rf transformers && \
     # python3 -m pip install transformers && \
-    python3 -m pip install --upgrade --force-reinstall -r /app/requirements.txt
+    python3 -m pip install --upgrade --force-reinstall -r /app/requirements.txt && \
+    rm -fr /tmp/* /home/user/.cache/pip/ /root/.cache
 
 USER user
 
