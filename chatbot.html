@@ -44,7 +44,7 @@
           input.value = text
         }
 
-        if (qa_mode.checked && !(text.endsWith('小元:') || text.endsWith('小元：'))) {
+        if (qa_mode.checked && !(text.endsWith('小元:') || text.endsWith('小元：') || text.endsWith('用户:') || text.endsWith('用户：'))) {
           text += "\n小元:"
           input.value = text
         }
@@ -56,17 +56,22 @@
         });
 
         const reader = response.body.getReader();
-
         if (story_mode.checked) {
+          oldText = text
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
             const chunk = new TextDecoder("utf-8").decode(value);
             text += chunk
             input.value = text
+            input.scrollTop = input.scrollHeight;
           }
           if (qa_mode.checked) {
-            text += "\n用户:"
+            if (oldText.endsWith('用户：') || oldText.endsWith('用户:')) {
+              text += "\n小元:"
+            } else {
+              text += "\n用户:"
+            }
             input.value = text
           }
           setTimeout(() => {
