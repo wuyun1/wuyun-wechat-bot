@@ -55,13 +55,18 @@ USER user
 
 ADD ./app /app/app/
 
-RUN if [ "x$INSTALL_MODEL" != "xnone" ] ; then python /app/app/answer.py; fi
+# RUN if [ "x$INSTALL_MODEL" != "xnone" ] ; then python /app/app/answer.py; fi
 
 # ADD --chown=user:user ./models--ClueAI--ChatYuan-large-v1 /home/user/.cache/huggingface/hub/models--ClueAI--ChatYuan-large-v1/
 
 CMD ["python", "/app/app/main-api.py"]
 
 EXPOSE 3000
+
+ENV MODEL_NAME=EleutherAI/pythia-70m-deduped
+ENV MODEL_CLASS=T5ForConditionalGeneration
+ENV MODEL_TOKENIZER=AutoTokenizer
+ENV torch_device=cpu
 
 # docker build . -t docker.io/jonneywu/wechatbot:1 -f Dockerfile_ai  --squash
 # docker build . -t docker.io/jonneywu/wechatbot:1 -f Dockerfile_ai --build-arg INSTALL_MODEL=none  --squash

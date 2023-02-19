@@ -4,20 +4,24 @@ import time
 import asyncio
 import os
 import torch
+import transformers
 from transformers.generation.utils import (logging)
 from typing import Any
-from transformers import T5Tokenizer, AutoTokenizer, T5ForConditionalGeneration, GPTNeoXForCausalLM, AutoModel, GPTNeoXTokenizerFast, LogitsProcessorList, StoppingCriteriaList
 
 # import os
 # os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-MODEL_NAME = "ClueAI/ChatYuan-large-v1"
-MODEL_CLASS = T5ForConditionalGeneration
+# MODEL_NAME = "ClueAI/ChatYuan-large-v1"
+# MODEL_CLASS = T5ForConditionalGeneration
 
-# MODEL_NAME="EleutherAI/pythia-70m-deduped"
-# MODEL_CLASS=GPTNeoXForCausalLM
+MODEL_NAME = os.environ.get('MODEL_NAME', "EleutherAI/pythia-70m-deduped")
+_MODEL_CLASS = os.environ.get('MODEL_CLASS', "GPTNeoXForCausalLM")
+_MODEL_TOKENIZER = os.environ.get('MODEL_TOKENIZER', "AutoTokenizer")
 
-tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+MODEL_CLASS = eval(f"transformers.{_MODEL_CLASS}")
+MODEL_TOKENIZER_CLASS = eval(f"transformers.{_MODEL_TOKENIZER}")
+
+tokenizer = MODEL_TOKENIZER_CLASS.from_pretrained(MODEL_NAME)
 
 
 logger = logging.get_logger(__name__)
@@ -25,7 +29,6 @@ logger = logging.get_logger(__name__)
 model = MODEL_CLASS.from_pretrained(
     MODEL_NAME,
 )
-
 
 torch_device = os.environ.get('torch_device', 'cpu')
 device = torch.device(torch_device)
@@ -177,11 +180,11 @@ async def async_answer(
 
 async def main():
 
-    input_text = "写首诗"
-    input_text = "用户：" + input_text + "\n小元："
+    # input_text = "写首诗"
+    # input_text = "用户：" + input_text + "\n小元："
 
     print(f"示例1".center(50, "="))
-    # input_text= "hello baby"
+    input_text = "hello baby"
 
     async for result in async_answer(text=input_text, sample=True, max_new_tokens=40):
         print(result, end="")
