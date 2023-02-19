@@ -66,6 +66,8 @@ RUN if [ "x$INSTALL_MODEL" != "xnone" ] ; then python /app/app/answer.py; fi
 
 CMD ["python", "/app/app/main-api.py"]
 
+EXPOSE 3000
+
 # docker build . -t docker.io/jonneywu/wechatbot:1 -f Dockerfile_ai  --squash
 # docker build . -t docker.io/jonneywu/wechatbot:1 -f Dockerfile_ai --build-arg INSTALL_MODEL=none  --squash
 # docker build . -t docker.io/jonneywu/wechatbot:1 -f Dockerfile_ai --build-arg ALIYUN=none
