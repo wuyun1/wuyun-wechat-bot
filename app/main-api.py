@@ -200,7 +200,7 @@ async def generate_text(text_request: Question, request: Request):
 
 current_path = os.path.dirname(os.path.abspath(__file__))
 
-chatbot_html_file_path = os.path.join(os.getcwd(), "chatbot.html")
+chatbot_html_file_path = os.path.join(current_path, "chatbot.html")
 
 
 @app.get("/", response_class=HTMLResponse)
