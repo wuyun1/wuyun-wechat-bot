@@ -37,17 +37,19 @@
         input.disabled = true;
         submit.disabled = true;
 
-        // input.value = "";
+        if (story_mode.checked) {
 
-        if (qa_mode.checked && !(text.startsWith('用户:'))) {
-          text = `用户:${text}`
-          input.value = text
+          if (qa_mode.checked && !(text.startsWith('用户:'))) {
+            text = `用户:${text}`
+            input.value = text
+          }
+
+          if (qa_mode.checked && !(text.endsWith('小元:') || text.endsWith('小元：') || text.endsWith('用户:') || text.endsWith('用户：'))) {
+            text += "\n小元:"
+            input.value = text
+          }
         }
 
-        if (qa_mode.checked && !(text.endsWith('小元:') || text.endsWith('小元：') || text.endsWith('用户:') || text.endsWith('用户：'))) {
-          text += "\n小元:"
-          input.value = text
-        }
 
         const response = await fetch("/generate_text_async", {
           method: "POST",
@@ -81,6 +83,8 @@
           return;
         }
 
+        input.value = "";
+
         const userbox = document.createElement('pre');
         userbox.innerText = `User: ${text}`
         chatlog.appendChild(userbox);
@@ -98,6 +102,10 @@
           result.push(chunk);
           chatbox.innerText = `Bot: ${result.join('')}`
         }
+        setTimeout(() => {
+          input.focus();
+          input.selectionStart = input.selectionEnd = input.value.length;
+        }, 0);
       } catch (e) {
         console.error(e)
       } finally {
@@ -107,6 +115,10 @@
     };
 
     input.addEventListener("keydown", function (event) {
+      if (input.disabled) {
+        event.preventDefault();
+        return;
+      }
       if (event.keyCode === 13) {
         if ((event.ctrlKey || event.metaKey)) {
           input.value += '\n';
