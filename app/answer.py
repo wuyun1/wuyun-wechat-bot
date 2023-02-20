@@ -1,4 +1,3 @@
-from utils import global_executor
 from fastapi import Request
 import time
 import asyncio
@@ -156,6 +155,8 @@ async def async_answer(
         # do_consumer_feat.athrow(Exception, "取消")
         queue.put_nowait(None)
         return res
+
+    from utils import global_executor
 
     out_feature = global_loop.run_in_executor(global_executor, _generate, args)
 

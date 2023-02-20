@@ -8,6 +8,7 @@
   "type": "module",
   "scripts": {
     "gettoken2": "ts-node --esm --preferTsExts --experimentalSpecifierResolution node src/gettoken.ts",
+    "test-boa": "ts-node --esm --preferTsExts --experimentalSpecifierResolution node ./app/test-boa.ts",
     "gettoken": "ts-node --esm --preferTsExts --experimentalSpecifierResolution node src/chatgpt-test.ts",
     "dev2": "ts-node --esm --preferTsExts --experimentalSpecifierResolution node src/index.ts",
     "test-pdf": "ts-node --esm --preferTsExts --experimentalSpecifierResolution node src/test-pdf.ts",
@@ -30,6 +31,7 @@
   "author": "Jin",
   "license": "ISC",
   "dependencies": {
+    "@waynew/boa": "^2.1.0",
     "axios": "^1.3.0",
     "chatgpt": "^3.4.1",
     "dotenv": "^16.0.3",
