@@ -1,4 +1,4 @@
-FROM python
+FROM nvidia/cuda:10.0-base-ubuntu18.04
 
 ARG ALIYUN=""
 ARG INSTALL_MODEL=""
@@ -9,7 +9,7 @@ RUN rm -rf /etc/apt/sources.list.d/*
 
 ADD ./check-valid-until.txt /etc/apt/apt.conf.d/10no--check-valid-until
 
-ADD ./sources-debian.list /tmp/sources.list.1
+ADD ./sources.list /tmp/sources.list.1
 
 RUN if [ "x$ALIYUN" != "xnone" ] ; then mv -f /tmp/sources.list.1 /etc/apt/sources.list ; else rm -rf /tmp/sources.list.1 ; fi
 
