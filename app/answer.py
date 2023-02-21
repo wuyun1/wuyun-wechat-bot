@@ -44,40 +44,69 @@ def postprocess(text):
     return text.replace("\\n", "\n").replace("\\t", "\t")
 
 
-def answer(text="", sample=True, top_p=1, temperature=0.7, max_new_tokens=4096, encoding=None):
+def answer(text="", sample=True, top_p=1, temperature=0.7, max_new_tokens=40, encoding=None, **kwargs):
     '''sample：是否抽样。生成任务，可以设置为True;
     top_p：0-1之间，生成的内容越多样'''
 
     encoding = encoding is not None if encoding else tokenizer(text=[preprocess(
         text)], truncation=True, max_length=768, return_tensors="pt").to(device)  # padding=True,
 
-    if not sample:
-        out = model.generate(
-            **encoding,
-            return_dict_in_generate=True,
-            output_scores=False,
-            max_new_tokens=max_new_tokens,
-            num_beams=1,
-            length_penalty=0.6
+    args = {
+        **kwargs,
+        **encoding,
+        "return_dict_in_generate": True,
+        "output_scores": False,
+        "max_new_tokens": max_new_tokens,
+        "num_beams": 1,
+        "length_penalty": 0.6,
+    }
+
+    if sample:
+        args.update(
+            {
+                "do_sample": True,
+                "top_p": top_p,
+                "temperature": temperature,
+                "no_repeat_ngram_size": 3,
+                "length_penalty": None
+            }
         )
-    else:
-        out = model.generate(
-            **encoding,
-            return_dict_in_generate=True,
-            output_scores=False,
-            max_new_tokens=max_new_tokens,
-            do_sample=True, top_p=top_p,
-            temperature=temperature,
-            no_repeat_ngram_size=3
-        )
+    # if MODEL_NAME == "EleutherAI/pythia-70m-deduped" and args["pad_token_id"] is None and args["eos_token_id"] is None:
+    #     args.update(
+    #         {
+    #             "pad_token_id": tokenizer.pad_token_id,
+    #             "eos_token_id": tokenizer.eos_token_id,
+    #         }
+    #     )
+
+    out = model.generate(
+        **kwargs,
+        **encoding,
+        return_dict_in_generate=True,
+        output_scores=False,
+        max_new_tokens=max_new_tokens,
+        num_beams=1,
+        length_penalty=0.6
+    )
 
     res_sequences = out["sequences"]
     if MODEL_NAME == "EleutherAI/pythia-70m-deduped":
         res_sequences = [out["sequences"][0][len(encoding["input_ids"][0]):]]
-    out_text = tokenizer.batch_decode(res_sequences, skip_special_tokens=True)
-    res = postprocess(out_text[0])
-    # res = res.replace(text, "", 1)
-    return res
+
+    # out_text = tokenizer.batch_decode(res_sequences, skip_special_tokens=True)
+    # res = postprocess(out_text[0])
+    # # res = res.replace(text, "", 1)
+    # return res
+
+    if kwargs["prefix_allowed_tokens_fn"] is None:
+        out_text = tokenizer.batch_decode(res_sequences, skip_special_tokens=True)
+        res = postprocess(out_text[0])
+        # res = res.replace(text, "", 1)
+        return res
+    else:
+        out_text = tokenizer.decode(res_sequences[0][-1:], skip_special_tokens=True)
+        res = postprocess(out_text)
+        return res
 
 
 async def async_answer(
@@ -85,7 +114,7 @@ async def async_answer(
     sample: bool = True,
     top_p: float = 1,
     temperature: float = 0.7,
-    max_new_tokens: int = 4096,
+    max_new_tokens: int = 40,
     request: Request = None,
 ):
     """生成对话"""
@@ -98,15 +127,18 @@ async def async_answer(
 
     # request.state.is_close = False
 
+    _count = 0
+
     def my_prefix_allowed_tokens_fn(_, input_ids):
+        nonlocal _count
+        _count += 1
         if request is not None:
             request.state.is_close = asyncio.run(request.is_disconnected())
             if request.state.is_close:
                 queue.put_nowait(None)
                 raise asyncio.CancelledError()
-
-        if len(input_ids) > len(encoding.input_ids):
-            chunk = input_ids[-2:-1]
+        if _count > 1 :
+            chunk = input_ids[-1:]
             # print(chunk[0])
             global_loop.call_soon_threadsafe(queue.put_nowait, chunk)
             time.sleep(0)

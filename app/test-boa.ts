@@ -1,58 +1,191 @@
-import boa from '@pipcook/boa';
-import { mkdirSync } from 'fs';
+import boa from '@waynew/boa';
+import { Readable } from 'stream';
+import readlineApi from 'readline';
 
-const os = boa.import('os');
 
-const pdf = boa.import('app.pdf');
-// console.log(aaa.pdf_to_word);
+// const sys = boa.import('sys');
+// console.log(`sys pythonpath: ${sys.path}`);
 
-// const test22 = boa.import('app.test22');
-// console.log(test22.sum);
-if (!os.path.exists('./word')) {
-  // os.makedirs(
-  //   './word',
-  //   boa.kwargs({
-  //     mode: 0x777,
-  //     exist_ok: false,
-  //   })
-  // );
-  mkdirSync('./word');
+// const testUtils = boa.import('app.test-utils');
+
+// testUtils.sum(3, 4, (c) => {
+//   console.log(`c === ${c}`);
+//   // throw new Error('asfs');
+//   return `hadfasdfasdf`;
+// });
+
+interface answer_syncOptions {
+  max_new_tokens?: number;
+  [key: string]: any;
 }
 
-pdf.pdf_to_word('./pdf/aaa.pdf', './word/xxxx.docx');
+export const answer_sync = (text, options: answer_syncOptions = {}) => {
 
-const answer = boa.import('app.answer');
-console.log(answer);
+  const {
+    max_new_tokens = 40,
+    ...otherOptions
+  } = options;
 
-for (let index = 0; index < 10; index++) {
-  const prompt = 'hello';
+  let isDone = false;
 
-  const output = answer.answer(
-    boa.kwargs({
-      text: prompt,
-      sample: true,
-      max_new_tokens: 40,
-    })
-  );
+  // 定义一个自定义的可读流
+  class MyReadableStream extends Readable {
+    dataSource: any[];
 
-  console.log(`${prompt}:${output}`);
+    constructor(dataSource?: any[]) {
+      super();
+      this.dataSource = dataSource || [];
+    }
 
-  console.log('='.repeat(20));
+    _read() {
+      const data = this.dataSource.shift() || null;
+      // console.log({ data })
+      if (data) {
+        this.push(data);
+        return;
+      } else if (isDone) {
+        this.push(null);
+        return;
+      } else {
+        // todo wait data
+      }
+    }
+  }
+
+  const stream = new MyReadableStream();
+
+  const answer = boa.import('app.answer');
+
+  const prompt = text;
+  let count = 0;
+
+  setTimeout(() => {
+    try {
+      const output = answer.answer(
+        boa.kwargs({
+          ...otherOptions,
+          text: prompt,
+
+          prefix_allowed_tokens_fn: (_, input_ids) => {
+            count++;
+            if (count > 1) {
+              // const chunk = boa.eval`${input_ids}[-1:]`;
+              // const chunk = input_ids;
+              const str = boa.eval`${answer.postprocess}(${answer.tokenizer}.decode(${input_ids}[-1:]))`;
+              // answer.postprocess(answer.tokenizer.decode(chunk));
+              // console.log({ str })
+              stream.dataSource.push(str);
+              stream._read();
+            }
+            if (isDone) {
+              throw Error('end');
+            }
+          },
+
+          sample: true,
+
+          max_new_tokens,
+        })
+      );
+      isDone = true;
+      // console.log(`output: ${output}`)
+      stream.dataSource.push(output);
+      stream._read();
+      stream._read();
+    } catch (error) {
+      // console.error('asdfasf23412341324afsd');
+      // console.error(error);
+      isDone = true;
+      stream._read();
+      stream._read();
+    }
+  }, 0);
+
+  return stream;
+
+};
+
+export const readline = readlineApi.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
+export const question = (prompt): Promise<string> => {
+  return new Promise(resolve => {
+    readline.question(prompt, resolve);
+  });
 }
 
-// console.log(os.getpid()); // prints the pid from python.
+// const flush = (data = '') => {
+//   return new Promise(resolve => {
+//     process.stdout.write(data, resolve);
+//   });
+// }
 
-// // using keyword arguments namely `kwargs`
-// os.makedirs(
-//   '..',
-//   boa.kwargs({
-//     mode: 0x777,
-//     exist_ok: false,
-//   })
-// );
+// const delay = (timeout = 0) => {
+//   return new Promise(resolve => {
+//     setTimeout(() => { resolve(null) }, timeout)
+//   });
+// }
 
-// using bult-in functions
-const { range, len } = boa.builtins();
-const list = range(0, 10); // create a range array
-console.log(len(list)); // 10
-console.log(list[2]); // 2
+export async function main() {
+  let input = '';
+  while (true) {
+    input = await question('User: ');
+
+    if (input === 'q') {
+      break;
+    }
+    if (input.trim() === '') {
+      continue;
+    }
+
+    const s = answer_sync(input, {
+      max_new_tokens: 500,
+      // eos_token_id: 0,
+      // pad_token_id: 0,
+    });
+
+    process.stdout.write('AI: ');
+
+    // for await (const chunk of s) {
+    //   // process.stdout.write(chunk);
+    //   await flush(chunk);
+    //   await delay(500);
+    //   // await flush(chunk);
+    // }
+
+    s.on('data', (chunk) => {
+      process.stdout.write(chunk);
+      // flush();
+    });
+
+    let _resolve: any = null;
+    const p = new Promise((resolve) => {
+      _resolve = resolve;
+    });
+
+    s.on('end', () => {
+      _resolve(null);
+    });
+
+    s.on('error', () => {
+      _resolve(null);
+    });
+
+    s.on('close', () => {
+      _resolve(null);
+    });
+
+    await p;
+
+    console.log();
+
+  };
+
+  readline.close();
+  process.exit();
+
+}
+
+main();
