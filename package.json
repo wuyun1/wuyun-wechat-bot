@@ -8,6 +8,7 @@
   "type": "module",
   "scripts": {
     "gettoken2": "ts-node --esm --preferTsExts --experimentalSpecifierResolution node src/gettoken.ts",
+    "test-api": "ts-node --esm --preferTsExts --experimentalSpecifierResolution node ./src/main-api.ts",
     "test-boa": "ts-node --esm --preferTsExts --experimentalSpecifierResolution node ./app/test-boa.ts",
     "test-boa2": "./node_modules/@waynew/boa/.miniconda/bin/python ./app/answer.py",
     "gettoken": "ts-node --esm --preferTsExts --experimentalSpecifierResolution node src/chatgpt-test.ts",
@@ -41,6 +42,7 @@
     "axios": "^1.3.0",
     "chatgpt": "^3.4.1",
     "dotenv": "^16.0.3",
+    "fastify": "^4.13.0",
     "file-box": "^1.4.15",
     "node-fetch": "^3.3.0",
     "openai": "^3.1.0",

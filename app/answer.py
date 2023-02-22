@@ -105,17 +105,11 @@ def answer(text="", sample=True, top_p=1, temperature=0.7, max_new_tokens=40, en
 
 async def main():
 
+    print(f"示例1".center(50, "="))
+
     input_text = "写首诗"
     input_text = "用户：" + input_text + "\n小元："
 
-    print(f"示例1".center(50, "="))
-    # input_text = "hello baby"
-
-    # async for result in async_answer(text=input_text, sample=True, max_new_tokens=40):
-    #     print(result, end="")
-
-    # print(f"示例2".center(50, "="))
-    # # input_text= "hello baby"
 
     output_text = answer(text=input_text, sample=True, max_new_tokens=400)
     print(f"{input_text}{output_text}")
