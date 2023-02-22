@@ -4,7 +4,7 @@ from fastapi import FastAPI, File, UploadFile, Response, status, Request
 import uvicorn
 from utils import global_executor
 import asyncio
-from answer import answer, async_answer
+from answer import answer
 from pydantic import BaseModel
 from typing import Any, Union
 import traceback
@@ -122,6 +122,7 @@ class Question(BaseModel):
     max_len: Union[float, None] = 50
     temperature: Union[float, None] = 1.0
     top_p: Union[float, None] = 0.95
+    top_k: Union[float, None]
     sample: Union[None, bool] = True
 
 
@@ -183,14 +184,16 @@ async def generate_text_async(q: Question, request: Any = None):
         "text": q.text,
         "max_new_tokens": q.max_len,
         "sample": q.sample,
-        # "top_k": 50,
+        "top_k": q.top_k,
         "top_p": q.top_p,
         "request": request,
         "temperature": q.temperature
     }
 
-    async for token in async_answer(**generation_params):
-        yield str(token)
+    yield str(generation_params)
+
+    # async for token in async_answer(**generation_params):
+    #     yield str(token)
 
 
 @app.post("/api/generate_text_async")
@@ -201,7 +204,6 @@ async def generate_text(text_request: Question, request: Request):
 current_path = os.path.dirname(os.path.abspath(__file__))
 
 chatbot_html_file_path = os.path.join(current_path, "chatbot.html")
-
 
 @app.get("/", response_class=HTMLResponse)
 async def index():

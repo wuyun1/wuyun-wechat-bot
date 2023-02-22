@@ -2,7 +2,6 @@ import boa from '@waynew/boa';
 import { Readable } from 'stream';
 import readlineApi from 'readline';
 
-
 // const sys = boa.import('sys');
 // console.log(`sys pythonpath: ${sys.path}`);
 
@@ -20,11 +19,7 @@ interface answer_syncOptions {
 }
 
 export const answer_sync = (text, options: answer_syncOptions = {}) => {
-
-  const {
-    max_new_tokens = 40,
-    ...otherOptions
-  } = options;
+  const { max_new_tokens = 40, ...otherOptions } = options;
 
   let isDone = false;
 
@@ -102,19 +97,18 @@ export const answer_sync = (text, options: answer_syncOptions = {}) => {
   }, 0);
 
   return stream;
-
 };
 
 export const readline = readlineApi.createInterface({
   input: process.stdin,
-  output: process.stdout
+  output: process.stdout,
 });
 
 export const question = (prompt): Promise<string> => {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     readline.question(prompt, resolve);
   });
-}
+};
 
 // const flush = (data = '') => {
 //   return new Promise(resolve => {
@@ -130,6 +124,7 @@ export const question = (prompt): Promise<string> => {
 
 export async function main() {
   let input = '';
+  // eslint-disable-next-line no-constant-condition
   while (true) {
     input = await question('User: ');
 
@@ -180,12 +175,10 @@ export async function main() {
     await p;
 
     console.log();
-
-  };
+  }
 
   readline.close();
   process.exit();
-
 }
 
 main();

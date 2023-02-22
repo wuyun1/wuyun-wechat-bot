@@ -9,6 +9,7 @@
   "scripts": {
     "gettoken2": "ts-node --esm --preferTsExts --experimentalSpecifierResolution node src/gettoken.ts",
     "test-boa": "ts-node --esm --preferTsExts --experimentalSpecifierResolution node ./app/test-boa.ts",
+    "test-boa2": "./node_modules/@waynew/boa/.miniconda/bin/python ./app/answer.py",
     "gettoken": "ts-node --esm --preferTsExts --experimentalSpecifierResolution node src/chatgpt-test.ts",
     "dev2": "ts-node --esm --preferTsExts --experimentalSpecifierResolution node src/index.ts",
     "test-pdf": "ts-node --esm --preferTsExts --experimentalSpecifierResolution node src/test-pdf.ts",
