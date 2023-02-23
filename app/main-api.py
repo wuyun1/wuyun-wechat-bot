@@ -63,7 +63,23 @@ async def create_upload_files(
 
         return respose
     finally:
-        os.remove(word_file_path)
+        async def clean():
+            await asyncio.sleep(10)
+            os.remove(word_file_path)
+        asyncio.create_task(clean())
+
+
+current_path = os.path.dirname(os.path.abspath(__file__))
+
+chatbot_html_file_path = os.path.join(current_path, "../src/chatbot.html")
+pdf_html_file_path = os.path.join(current_path, "../src/pdf.html")
+
+
+@app.get("/pdf", response_class=HTMLResponse)
+async def index():
+    with open(pdf_html_file_path, "r") as f:
+        html = f.read()
+    return html
 
 
 class Question(BaseModel):
@@ -169,7 +185,7 @@ async def generate_text_async(q: Question, request: Request):
     global_loop = asyncio.get_event_loop()
 
     request.state.is_done = False
-    count = 0
+    # count = 0
 
     async def check_is_done():
         while not request.state.is_done:
@@ -248,9 +264,7 @@ async def generate_text(q: Question, request: Request):
     return StreamingResponse(generate_text_async(q, request=request), media_type="text/event-stream")
 
 
-current_path = os.path.dirname(os.path.abspath(__file__))
 
-chatbot_html_file_path = os.path.join(current_path, "../src/chatbot.html")
 
 @app.get("/", response_class=HTMLResponse)
 async def index():

@@ -90,6 +90,7 @@ USER user
 
 ADD ./app /app/app/
 ADD ./src/chatbot.html /app/src/chatbot.html
+ADD ./src/pdf.html /app/src/pdf.html
 
 # RUN if [ "x$INSTALL_MODEL" != "xnone" ] ; then python /app/app/answer.py; fi
 
