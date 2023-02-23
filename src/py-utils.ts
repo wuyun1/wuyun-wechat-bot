@@ -46,7 +46,7 @@ export const answer_sync = (options: answer_syncOptions = {}) => {
 
   const stream = new Readable({
     objectMode: true,
-    read(...args) {
+    read() {
       // console.log({ args });
       // return 'hee';
       // no thing

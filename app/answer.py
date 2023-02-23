@@ -94,8 +94,8 @@ def answer(text="", sample=True, top_p=1, temperature=0.7, ondata = None,max_new
     # if MODEL_NAME == "EleutherAI/pythia-70m-deduped" and args["pad_token_id"] is None and args["eos_token_id"] is None:
     #     args.update(
     #         {
-    #             "pad_token_id": tokenizer.pad_token_id,
-    #             "eos_token_id": tokenizer.eos_token_id,
+    #             # "pad_token_id": 0,
+    #             "eos_token_id": 0,
     #         }
     #     )
 
