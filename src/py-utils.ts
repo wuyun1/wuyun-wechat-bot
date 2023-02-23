@@ -18,42 +18,29 @@ interface answer_syncOptions {
 }
 
 export const answer_sync = (options: answer_syncOptions = {}) => {
-  const { text, max_new_tokens = 40, ...otherOptions } = options;
-
-  let isDone = false;
-
-  // 定义一个自定义的可读流
-  class MyReadableStream extends Readable {
-    dataSource: any[];
-
-    constructor(dataSource?: any[]) {
-      super();
-      this.dataSource = dataSource || [];
-    }
-
-    _read() {
-      const data = this.dataSource.shift() || null;
-      // console.log({ data })
-      if (data) {
-        this.push(data);
-        return;
-      } else if (isDone) {
-        this.push(null);
-        return;
-      } else {
-        // todo wait data
-      }
-    }
-  }
-
-  const stream = new MyReadableStream();
-
   const answer = boa.import('app.answer');
 
-  const prompt = text;
-  let count = 0;
+  const { text, max_new_tokens = 40, ...otherOptions } = options;
 
-  setTimeout(() => {
+  // const dataSource: any[] = [];
+  let isDone = false;
+
+  const stream = new Readable({
+    objectMode: true,
+    read(...args) {
+      // console.log({ args });
+      // return 'hee';
+      // no thing
+    },
+    destroy() {
+      isDone = true;
+    },
+    autoDestroy: true,
+  });
+
+  const task = () => {
+    const prompt = text;
+    let count = 0;
     try {
       const output = answer.answer(
         boa.kwargs({
@@ -67,9 +54,14 @@ export const answer_sync = (options: answer_syncOptions = {}) => {
               // const chunk = input_ids;
               const str = boa.eval`${answer.postprocess}(${answer.tokenizer}.decode(${input_ids}[-1:]))`;
               // answer.postprocess(answer.tokenizer.decode(chunk));
-              // console.log({ str })
-              stream.dataSource.push(str);
-              stream._read();
+
+              stream.push(str);
+
+              // setTimeout(() => {
+              //   stream.push(str);
+              // }, count * 10);
+
+              // stream.read();
             }
             if (isDone) {
               throw Error('end');
@@ -81,19 +73,26 @@ export const answer_sync = (options: answer_syncOptions = {}) => {
           max_new_tokens,
         })
       );
-      isDone = true;
-      // console.log(`output: ${output}`)
-      stream.dataSource.push(output);
-      stream._read();
-      stream._read();
+
+      stream.push(output);
     } catch (error) {
-      // console.error('asdfasf23412341324afsd');
       // console.error(error);
+      // isDone = true;
+      // stream.push(null);
+    } finally {
       isDone = true;
-      stream._read();
-      stream._read();
+      stream.push(null);
+      // setTimeout(() => {
+      //   isDone = true;
+      //   stream.push(null);
+      // }, count * 10);
     }
-  }, 0);
+  };
+
+  // nextTick(task);
+  // task();
+
+  setTimeout(task, 0);
 
   return stream;
 };
