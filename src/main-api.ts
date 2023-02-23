@@ -15,6 +15,7 @@ import { createReadStream } from 'fs';
 import path, { dirname, join } from 'path';
 // import { randomBytes } from 'crypto';
 import { createRequire } from 'module';
+import { Readable } from 'stream';
 // import dotenv from 'dotenv';
 
 // dotenv.config();
@@ -49,6 +50,14 @@ class Question {
     this.sample = sample;
   }
 }
+
+export const delay = (t = 0) => {
+  return new Promise((re) => {
+    setTimeout(() => {
+      re(null);
+    }, t);
+  });
+};
 
 // Run the server!
 const start = async () => {
@@ -249,6 +258,28 @@ const start = async () => {
         const text_request = request.body;
         const stream = generate_text_async(new Question(text_request as any));
 
+        // const stream = new Readable({
+        //   objectMode: true,
+        //   read() {
+        //     // no thing
+        //   },
+        // });
+
+        // (async () => {
+        //   let i = 0;
+        //   while (i < 10) {
+        //     // stream.push(`\ndata: ${i}\n`);
+        //     stream.push(`${i} `);
+        //     // stream.push(`data: ${i} `);
+
+        //     await delay(100);
+
+        //     i++;
+        //   }
+        //   stream.push('\nend\n');
+        //   stream.push(null);
+        // })();
+
         const breakFn = () => {
           stream.destroy();
           console.log('===========breakFn======');
@@ -258,50 +289,14 @@ const start = async () => {
 
         stream.on('data', (chunk) => {
           // console.log({ chunk });
-
-          // reply.raw.socket?.write(Buffer.from(chunk));
-
           reply.raw.write(chunk);
-          // reply.raw.writeProcessing()
-          // reply.raw.socket?.write(Buffer.from(chunk));
         });
 
         stream.on('end', () => {
           reply.raw.end();
-          // reply.raw.socket?.end();
         });
 
         return reply;
-
-        // const stream = new Readable({
-        //   objectMode: true,
-        //   read() {
-        //     // no thing
-        //   },
-        // });
-
-        // const delay = (t = 0) => {
-        //   return new Promise((re) => {
-        //     setTimeout(() => {
-        //       re(null);
-        //     }, t);
-        //   });
-        // };
-
-        // (async () => {
-        //   let i = 0;
-        //   while (i < 10) {
-        //     stream.push(`\ndata: ${i}\n`);
-
-        //     await delay(1000);
-
-        //     i++;
-        //   }
-        //   stream.push('\nend\n');
-        //   stream.push(null);
-        // })();
-
-        // return reply.send(stream);
       }
     );
 
