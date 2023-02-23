@@ -59,36 +59,18 @@ export const answer_sync = (options: answer_syncOptions = {}) => {
 
   const task = () => {
     const prompt = text;
-    let count = 0;
     try {
       const output = answer.answer(
         boa.kwargs({
+          sample: true,
           ...otherOptions,
           text: prompt,
-
-          prefix_allowed_tokens_fn: (_, input_ids) => {
-            count++;
-            if (count > 1) {
-              // const chunk = boa.eval`${input_ids}[-1:]`;
-              // const chunk = input_ids;
-              const str = boa.eval`${answer.postprocess}(${answer.tokenizer}.decode(${input_ids}[-1:]))`;
-              // answer.postprocess(answer.tokenizer.decode(chunk));
-
-              stream.push(str);
-
-              // setTimeout(() => {
-              //   stream.push(str);
-              // }, count * 10);
-
-              // stream.read();
-            }
-            if (isDone) {
+          ondata: (data) => {
+            if (isDone || !data) {
               throw Error('end');
             }
+            stream.push(data);
           },
-
-          sample: true,
-
           max_new_tokens,
         })
       );

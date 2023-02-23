@@ -43,8 +43,10 @@ def preprocess(text):
 def postprocess(text):
     return text.replace("\\n", "\n").replace("\\t", "\t")
 
+from concurrent.futures import ThreadPoolExecutor
+global_executor = ThreadPoolExecutor(2)
 
-def answer(text="", sample=True, top_p=1, temperature=0.7, max_new_tokens=40, encoding=None, **kwargs):
+def answer(text="", sample=True, top_p=1, temperature=0.7, ondata = None,max_new_tokens=40, encoding=None, **kwargs):
     '''sample：是否抽样。生成任务，可以设置为True;
     top_p：0-1之间，生成的内容越多样'''
 
@@ -71,6 +73,24 @@ def answer(text="", sample=True, top_p=1, temperature=0.7, max_new_tokens=40, en
                 "length_penalty": None
             }
         )
+
+    if ondata is not None:
+        is_first = True
+        def prefix_allowed_tokens_fn(_, input_ids):
+            nonlocal is_first
+            if is_first:
+                is_first = False
+                return
+            chunk = input_ids[-1:]
+            str = postprocess(tokenizer.decode(chunk))
+            # print(f"chunk: {str}")
+            ondata(str)
+        args.update(
+            {
+                "prefix_allowed_tokens_fn": prefix_allowed_tokens_fn,
+            }
+        )
+
     # if MODEL_NAME == "EleutherAI/pythia-70m-deduped" and args["pad_token_id"] is None and args["eos_token_id"] is None:
     #     args.update(
     #         {
@@ -79,40 +99,63 @@ def answer(text="", sample=True, top_p=1, temperature=0.7, max_new_tokens=40, en
     #         }
     #     )
 
-    out = model.generate(
-        **args
-    )
+    def task():
+        out = model.generate(
+            **args
+        )
 
-    res_sequences = out["sequences"]
-    if MODEL_NAME == "EleutherAI/pythia-70m-deduped":
-        res_sequences = [out["sequences"][0][len(encoding["input_ids"][0]):]]
+        res_sequences = out["sequences"]
+        if MODEL_NAME == "EleutherAI/pythia-70m-deduped":
+            res_sequences = [out["sequences"][0][len(encoding["input_ids"][0]):]]
 
-    # out_text = tokenizer.batch_decode(res_sequences, skip_special_tokens=True)
-    # res = postprocess(out_text[0])
-    # # res = res.replace(text, "", 1)
-    # return res
+        # out_text = tokenizer.batch_decode(res_sequences, skip_special_tokens=True)
+        # res = postprocess(out_text[0])
+        # # res = res.replace(text, "", 1)
+        # return res
 
-    if kwargs.get("prefix_allowed_tokens_fn") is None:
-        out_text = tokenizer.batch_decode(res_sequences, skip_special_tokens=True)
-        res = postprocess(out_text[0])
-        # res = res.replace(text, "", 1)
-        return res
+        if ondata is None:
+            out_text = tokenizer.batch_decode(res_sequences, skip_special_tokens=True)
+            res = postprocess(out_text[0])
+            # res = res.replace(text, "", 1)
+            return res
+        else:
+            out_text = tokenizer.decode(res_sequences[0][-1:], skip_special_tokens=True)
+            res = postprocess(out_text)
+            ondata(res)
+            ondata(None)
+            return res
+    if ondata is None:
+        return task()
     else:
-        out_text = tokenizer.decode(res_sequences[0][-1:], skip_special_tokens=True)
-        res = postprocess(out_text)
-        return res
+        # global_executor.submit(task)
+        task()
 
 
 async def main():
 
-    print(f"示例1".center(50, "="))
+    # print(f"示例1".center(50, "="))
 
-    input_text = "写首诗"
-    input_text = "用户：" + input_text + "\n小元："
+    # input_text = "写首诗"
+    # input_text = "用户：" + input_text + "\n小元："
 
+    # output_text = answer(text=input_text, sample=True, max_new_tokens=400)
+    # print(f"{input_text}{output_text}")
 
-    output_text = answer(text=input_text, sample=True, max_new_tokens=400)
-    print(f"{input_text}{output_text}")
+    input_text = " hello"
+
+    def ondata(data):
+        print(f"chunk: {data}")
+        # print(f"chunk: {data}", end="")
+
+    res = answer(
+        text=input_text,
+        sample=True,
+        max_new_tokens=4,
+        ondata=ondata
+    )
+
+    print(f"res : = : {res}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
