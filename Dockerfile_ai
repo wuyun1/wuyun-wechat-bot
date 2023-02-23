@@ -116,3 +116,5 @@ WORKDIR /app/app
 # docker run --gpus all -e torch_device=cuda -v $(cd ~;pwd)/.cache:/home/user/.cache -p 9000:9000  -p 8000:8000 --rm --name ai-test -ti docker.io/jonneywu/wechatbot:1
 
 # docker run  -e torch_device=cpu -v D:/.cache:/home/user/.cache  -p 9000:9000  -p 8000:8000 --rm --name ai-test -ti docker.io/jonneywu/wechatbot:1
+
+# docker run  -e MODEL_CLASS=T5ForConditionalGeneration -e MODEL_NAME=ClueAI/ChatYuan-large-v1 --gpus all -e torch_device=cuda -v $(cd ~;pwd)/.cache:/home/user/.cache -p 3000:3000 -d --name ai-test -ti registry.cn-hangzhou.aliyuncs.com/jajabjbj/wechatbot:latest
