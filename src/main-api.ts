@@ -244,7 +244,7 @@ const start = async () => {
       },
       async (request, reply) => {
         reply.raw.setHeader('content-type', 'text/event-stream');
-        // reply.raw.flushHeaders();
+        reply.raw.flushHeaders();
 
         const text_request = request.body;
         const stream = generate_text_async(new Question(text_request as any));
