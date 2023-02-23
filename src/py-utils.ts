@@ -41,7 +41,16 @@ export const answer_sync = (options: answer_syncOptions = {}) => {
 
   const { text, max_new_tokens = 40, ...otherOptions } = options;
 
-  // const dataSource: any[] = [];
+  // return answer.answer(
+  //   boa.kwargs({
+  //     // ondata: true,
+  //     sample: true,
+  //     ...otherOptions,
+  //     text,
+  //     max_new_tokens,
+  //   })
+  // );
+
   let isDone = false;
 
   const stream = new Readable({

@@ -123,5 +123,141 @@ async def api_generate(q: Question, request: Request):
         }
 
 
+@app.post('/api/generate')
+async def api_generate(q: Question, request: Request):
+    data = await request.json()
+    if 'text' not in data or not isinstance(data['text'], str):
+        return {
+            'ok': False,
+            'error': 'Invalid text in post data',
+        }
+    try:
+
+        generation_params = {
+            "text": q.text,
+            "max_new_tokens": q.max_len,
+            "sample": q.sample,
+            "top_k": q.top_k,
+            "top_p": q.top_p,
+            "request": request,
+            "temperature": q.temperature
+        }
+
+        ret = answer(**generation_params)
+
+        return {
+            'ok': True,
+            'text': ret,
+        }
+
+    except Exception:
+        return {
+            'ok': False,
+            'error': traceback.format_exc(),
+        }
+
+# from queue import Queue
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+global_executor = ThreadPoolExecutor(2)
+
+async def generate_text_async(q: Question, request: Request):
+
+    # qu = Queue()
+    queue = asyncio.Queue()
+
+    global_loop = asyncio.get_event_loop()
+
+    request.state.is_done = False
+    count = 0
+
+    async def check_is_done():
+        while not request.state.is_done:
+            await asyncio.sleep(.2)
+            is_disconnected = await request.is_disconnected()
+            if is_disconnected:
+                request.state.is_done = True
+                break
+
+    def my_callback(x):
+        # nonlocal count
+
+        if request.state.is_done :
+            raise Exception("end")
+
+        # queue.put_nowait(x)
+        global_loop.call_soon_threadsafe(queue.put_nowait, x)
+
+        # i_next_item = f"count = {count} \t is_done = {request.state.is_done}"
+        # print(i_next_item)
+        # count += 1
+        # asyncio.run(check_is_done)
+        # asyncio.run_coroutine_threadsafe(check_is_done)
+        # global_loop.run_until_complete(check_is_done)
+
+
+        # qu.join() # Blocks until task_done is called
+
+    generation_params = {
+        "text": q.text,
+        "max_new_tokens": q.max_len,
+        "sample": q.sample,
+        "ondata": my_callback,
+        "top_k": q.top_k,
+        "top_p": q.top_p,
+        # "request": request,
+        "temperature": q.temperature
+    }
+
+
+    def task():
+        # answer(**generation_params)
+
+        try:
+            return answer(**generation_params)
+        except:
+            pass
+        # nonlocal count
+        # while True:
+        #     time.sleep(1)
+        #     generation_params["ondata"](f"data = {count}")
+
+    global_loop.run_in_executor(global_executor, task)
+
+    asyncio.create_task(check_is_done())
+
+
+    # request.state.is_done = True
+
+
+    # Consumer
+    while True:
+        # print(f"is_done = {is_done}")
+        next_item = await queue.get() # Blocks until an input is available
+        # await asyncio.sleep(1)
+
+        if next_item is None:
+            break
+        yield next_item
+        # queue.task_done() # Unblocks the producer, so a new iteration can start
+
+
+
+@app.post("/api/generate_text_async")
+async def generate_text(q: Question, request: Request):
+    return StreamingResponse(generate_text_async(q, request=request), media_type="text/event-stream")
+
+
+current_path = os.path.dirname(os.path.abspath(__file__))
+
+chatbot_html_file_path = os.path.join(current_path, "../src/chatbot.html")
+
+@app.get("/", response_class=HTMLResponse)
+async def index():
+    with open(chatbot_html_file_path, "r") as f:
+        html = f.read()
+    return html
+
+
 if __name__ == "__main__":
     uvicorn.run("main-api:app", host="0.0.0.0", port=3000)

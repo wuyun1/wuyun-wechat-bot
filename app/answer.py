@@ -43,8 +43,6 @@ def preprocess(text):
 def postprocess(text):
     return text.replace("\\n", "\n").replace("\\t", "\t")
 
-from concurrent.futures import ThreadPoolExecutor
-global_executor = ThreadPoolExecutor(2)
 
 def answer(text="", sample=True, top_p=1, temperature=0.7, ondata = None,max_new_tokens=40, encoding=None, **kwargs):
     '''sample：是否抽样。生成任务，可以设置为True;
@@ -74,6 +72,10 @@ def answer(text="", sample=True, top_p=1, temperature=0.7, ondata = None,max_new
             }
         )
 
+    # global_loop = asyncio.new_event_loop()
+
+    # queue = asyncio.Queue(loop = global_loop)
+
     if ondata is not None:
         is_first = True
         def prefix_allowed_tokens_fn(_, input_ids):
@@ -85,6 +87,9 @@ def answer(text="", sample=True, top_p=1, temperature=0.7, ondata = None,max_new
             str = postprocess(tokenizer.decode(chunk))
             # print(f"chunk: {str}")
             ondata(str)
+            # global_loop.call_soon_threadsafe(queue.put_nowait, str)
+            time.sleep(0)
+
         args.update(
             {
                 "prefix_allowed_tokens_fn": prefix_allowed_tokens_fn,
@@ -98,6 +103,8 @@ def answer(text="", sample=True, top_p=1, temperature=0.7, ondata = None,max_new
     #             "eos_token_id": 0,
     #         }
     #     )
+
+
 
     def task():
         out = model.generate(
@@ -120,15 +127,94 @@ def answer(text="", sample=True, top_p=1, temperature=0.7, ondata = None,max_new
             return res
         else:
             out_text = tokenizer.decode(res_sequences[0][-1:], skip_special_tokens=True)
-            res = postprocess(out_text)
-            ondata(res)
+            str = postprocess(out_text)
+            ondata(str)
             ondata(None)
-            return res
+            # global_loop.call_soon_threadsafe(queue.put_nowait, str)
+            # time.sleep(0)
+            # global_loop.call_soon_threadsafe(queue.put_nowait, None)
+            # return res
     if ondata is None:
         return task()
     else:
         # global_executor.submit(task)
+        # global_loop.run_in_executor(global_executor, task)
         task()
+
+        # global_loop.run_until_complete(task)
+
+        # global_loop.call_soon_threadsafe(task)
+
+        # global_loop.call_soon_threadsafe(task)
+        # def gen():
+        #     # count = 0
+        #     def next():
+        #         def then(resolve, reject):
+        #             v = None
+        #             async def test():
+        #                 nonlocal v
+        #                 v = await queue.get()
+        #                 queue.task_done()
+
+        #                 # nonlocal count
+        #                 # count += 1
+        #                 # await asyncio.sleep(1)
+        #                 # if count > 5 :
+        #                 #     return None
+        #                 # return f"c{count} "
+        #                 # nonlocal v
+        #                 # v = await queue.get()
+        #                 # queue.task_done()
+        #                 # return v
+
+
+        #             value = asyncio.run(test())
+
+
+        #             value = v
+
+        #             # value = asyncio.run(queue.get())
+        #             # queue.task_done()
+
+        #             # value = "aaa"
+
+        #             is_done = False if value is None else True
+
+        #             resolve({
+        #                 "done": is_done,
+        #                 "value": value
+        #             })
+        #         return {
+        #             "then": then
+        #         }
+        #     return {
+        #         "done": True,
+        #         "next": next
+        #     }
+        #     # while True:
+        #     #     result = await queue.get()
+        #     #     queue.task_done()
+
+        #     #     if result is None:
+        #     #         break
+        #     #     yield result
+        #         # if result not in tokenizer.all_special_ids:
+        #         #     t = tokenizer.decode(result)
+        #         #     yield postprocess(t)
+        # return gen
+        # task()
+        # async def gen():
+        #     while True:
+        #         result = await queue.get()
+        #         queue.task_done()
+
+        #         if result is None:
+        #             break
+        #         yield result
+        #         # if result not in tokenizer.all_special_ids:
+        #         #     t = tokenizer.decode(result)
+        #         #     yield postprocess(t)
+        # return gen
 
 
 async def main():
@@ -154,7 +240,8 @@ async def main():
         ondata=ondata
     )
 
-    print(f"res : = : {res}")
+    # async for item in res():
+    #     print(f"res : = : {item}")
 
 
 if __name__ == "__main__":

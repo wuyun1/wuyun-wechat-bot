@@ -41,7 +41,7 @@ export async function main() {
       break;
     }
 
-    const s = answer_sync({
+    const s: any = answer_sync({
       text: input,
       max_new_tokens: 10,
       // eos_token_id: 0,
@@ -50,11 +50,17 @@ export async function main() {
 
     process.stdout.write('AI: ');
 
-    // for await (const chunk of s) {
-    //   // process.stdout.write(chunk);
-    //   await flush(chunk);
-    //   await delay(500);
-    //   // await flush(chunk);
+    // const generator = s();
+
+    // // console.log(generator);
+
+    // // You can use typical next syntax
+    // let curr = await generator.next();
+
+    // while (curr.done) {
+    //   process.stdout.write(curr.value);
+    //   // console.log(curr.value); // 3 2 1 0
+    //   curr = await generator.next();
     // }
 
     s.on('data', (chunk) => {
