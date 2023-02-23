@@ -17,6 +17,25 @@ interface answer_syncOptions {
   [key: string]: any;
 }
 
+export const answer = (options: answer_syncOptions = {}) => {
+  const answer = boa.import('app.answer');
+
+  const { text, max_new_tokens = 40, ...otherOptions } = options;
+
+  const output = answer.answer(
+    boa.kwargs({
+      ...otherOptions,
+      text,
+
+      sample: true,
+
+      max_new_tokens,
+    })
+  );
+
+  return output;
+};
+
 export const answer_sync = (options: answer_syncOptions = {}) => {
   const answer = boa.import('app.answer');
 

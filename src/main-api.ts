@@ -1,6 +1,6 @@
 import fastifyFactory, { FastifySchema } from 'fastify';
 import fs from 'fs';
-import { answer_sync } from './py-utils';
+import { answer, answer_sync } from './py-utils';
 import { pdf_to_word } from './py-utils';
 import { fileURLToPath } from 'url';
 // import fastifyMultipart from '@fastify/multipart';
@@ -244,6 +244,7 @@ const start = async () => {
       },
       async (request, reply) => {
         reply.raw.setHeader('content-type', 'text/event-stream');
+        // reply.raw.flushHeaders();
 
         const text_request = request.body;
         const stream = generate_text_async(new Question(text_request as any));
@@ -257,11 +258,17 @@ const start = async () => {
 
         stream.on('data', (chunk) => {
           // console.log({ chunk });
+
+          // reply.raw.socket?.write(Buffer.from(chunk));
+
           reply.raw.write(chunk);
+          // reply.raw.writeProcessing()
+          // reply.raw.socket?.write(Buffer.from(chunk));
         });
 
         stream.on('end', () => {
           reply.raw.end();
+          // reply.raw.socket?.end();
         });
 
         return reply;
@@ -317,8 +324,22 @@ const start = async () => {
         } as FastifySchema,
       },
       async (request, reply) => {
-        const text_request = request.body;
-        return reply.send(text_request);
+        const q = request.body as any;
+
+        const generation_params = {
+          text: q.text,
+          max_new_tokens: q.max_len,
+          sample: q.sample,
+          top_k: q.top_k,
+          top_p: q.top_p,
+          // request,
+          temperature: q.temperature,
+        };
+        // yield JSON.stringify(generation_params);
+
+        const res = answer(generation_params);
+
+        return reply.send({ res });
       }
     );
 
