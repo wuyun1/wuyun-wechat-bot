@@ -24,14 +24,16 @@
 <body>
   <h1>Chatbot</h1>
   <div id="chatlogContainer" class="container" style="height: 240px;overflow-y: auto;">
-    <div id="chatlog"></div>
+    <div id="chatlog">
+      <pre class="auto-line chat-box-bot">您好!我是AI。我可以回答您的问题、写文章、写作业、翻译,对于一些法律等领域的问题我也可以给你提供信息。</pre>
+    </div>
   </div>
   <form>
-    <label for="story_mode">续写模式: </label><input type="checkbox" id="story_mode" /> |
+    <label for="story_mode">续写模式: </label><input type="checkbox" id="story_mode" checked /> |
     <label for="max_len">续写长度: </label><input type="number" id="max_len" value="60" checked /> |
     <label for="qa_mode">自动拼接问答模式: </label><input type="checkbox" id="qa_mode" checked><br />
     <label for="input">content:</label><br />
-    <textarea id="input" style="width: 100%" rows="15">你好</textarea>
+    <textarea id="input" style="width: 100%" rows="15">写首诗</textarea>
     <button type="submit" id="submit">Send</button>
   </form>
   <script>

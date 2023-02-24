@@ -12,10 +12,19 @@ import random
 from pdf import pdf_to_word
 import logging
 import time
+from fastapi.middleware.cors import CORSMiddleware
 
 logging.basicConfig(level=logging.INFO)
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins= ["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 def random_string(letter_count, digit_count):
     str1 = ''.join((random.choice(string.ascii_letters)
