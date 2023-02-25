@@ -75,7 +75,7 @@ export const answer_sync = (options: answer_syncOptions = {}) => {
           ...otherOptions,
           text: prompt,
           ondata: (data) => {
-            if (isDone || !data) {
+            if (isDone || typeof data !== 'string') {
               throw Error('end');
             }
             stream.push(data);

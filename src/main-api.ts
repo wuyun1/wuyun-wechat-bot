@@ -1,7 +1,7 @@
 import fastifyFactory, { FastifySchema } from 'fastify';
 import fs from 'fs';
-import { answer, answer_sync } from './py-utils';
-import { pdf_to_word } from './py-utils';
+// import { answer, answer_sync } from './py-utils';
+// import { pdf_to_word } from './py-utils';
 import { fileURLToPath } from 'url';
 // import fastifyMultipart from '@fastify/multipart';
 // import fastifySee from 'fastify-sse';
@@ -12,9 +12,10 @@ import { createReadStream } from 'fs';
 // import { createWriteStream } from 'fs';
 // import { pipeline } from 'stream';
 // import { createInterface } from 'readline';
-import path, { dirname, join } from 'path';
+import { dirname, basename, join } from 'path';
 // import { randomBytes } from 'crypto';
 import { createRequire } from 'module';
+import { createWorkFn } from './workerify';
 // import dotenv from 'dotenv';
 
 // dotenv.config();
@@ -23,6 +24,22 @@ const require = createRequire(import.meta.url);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+const answer_sync = createWorkFn({
+  workFile: require.resolve('./py-utils'),
+  functionName: 'answer_sync',
+  returnType: 'stream',
+});
+
+const answer = createWorkFn({
+  workFile: require.resolve('./py-utils'),
+  functionName: 'answer',
+});
+
+const pdf_to_word = createWorkFn({
+  workFile: require.resolve('./py-utils'),
+  functionName: 'pdf_to_word',
+});
 
 class Question {
   text: string;
@@ -161,7 +178,7 @@ const start = async () => {
 
           // const temp_dir = '/tmp';
 
-          // const file_name = path.basename(pdf_file_name);
+          // const file_name = basename(pdf_file_name);
 
           // const random_s = 'pdf-to-word-' + random_string();
 
@@ -174,12 +191,12 @@ const start = async () => {
 
           const pdf_file_path = file;
           const random_s = 'pdf-to-word-' + random_string();
-          const file_name = path.basename(pdf_file_path);
+          const file_name = basename(pdf_file_path);
           const word_file_name = `${file_name}.docx`;
           const temp_dir = '/tmp';
           const word_file_path = `${temp_dir}/${random_s}${word_file_name}`;
 
-          pdf_to_word(pdf_file_path, word_file_path);
+          await pdf_to_word(pdf_file_path, word_file_path);
 
           const stream = fs.createReadStream(word_file_path);
           reply.type(
@@ -331,7 +348,7 @@ const start = async () => {
         };
         // yield JSON.stringify(generation_params);
 
-        const res = answer(generation_params);
+        const res = await answer(generation_params);
 
         return reply.send({ res });
       }
