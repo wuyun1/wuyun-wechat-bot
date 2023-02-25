@@ -51,7 +51,14 @@ def get_text(text, hps):
 # https://aistudio.baidu.com/aistudio/datasetdetail/190445
 
 
-m_path = (os.environ.get("ROOT_CURRENT_CWD", ".") + "/G_1434000.pth")
+cachedir = Path.home() / ".cache" / "vits"
+
+if not os.path.exists(cachedir):
+    os.makedirs(cachedir)
+
+m_path = str(cachedir) + "/G_1434000.pth"
+
+# m_path = (os.environ.get("ROOT_CURRENT_CWD", ".") + "/G_1434000.pth")
 
 
 def unbuffered(proc, stream='stdout'):
@@ -81,7 +88,7 @@ def transfare():
     # import codecs
     # decoder = codecs.getincrementaldecoder("UTF-8")()
     # runSh('curl -L -o ./G_1434001.pth https://huggingface.co/yunqiang/test/resolve/main/G_1434000.pth')
-    cmd = ["echo", "curl", "-L", "-o", m_path,  "https://huggingface.co/yunqiang/test/resolve/main/G_1434000.pth"]
+    cmd = ["curl", "-L", "-o", m_path,  "https://huggingface.co/yunqiang/test/resolve/main/G_1434000.pth"]
     proc = subprocess.Popen(
         cmd,
         stdout=subprocess.PIPE,
