@@ -22,6 +22,9 @@ jobs:
         run: |
           [ -z "$DOCKER_NS" ] && export DOCKER_NS="$DOCKER_USER"
           [ -z "$DOCKER_IMG" ] && export DOCKER_IMG="wechatbot"
-          docker build . --file Dockerfile_ai --build-arg ALIYUN=none --tag ${DOCKER_REPO_URL}/${DOCKER_NS}/${DOCKER_IMG}:latest
+          set -e
           echo ${DOCKER_PASSWORD} | docker login ${DOCKER_REPO_URL} --username ${DOCKER_USER} --password-stdin
+          docker build . --file Dockerfile_pdf --build-arg ALIYUN=none --tag ${DOCKER_REPO_URL}/${DOCKER_NS}/${DOCKER_IMG}:pdf
+          docker push ${DOCKER_REPO_URL}/${DOCKER_NS}/${DOCKER_IMG}:pdf
+          docker build . --file Dockerfile_ai --build-arg ALIYUN=none --tag ${DOCKER_REPO_URL}/${DOCKER_NS}/${DOCKER_IMG}:latest
           docker push ${DOCKER_REPO_URL}/${DOCKER_NS}/${DOCKER_IMG}:latest

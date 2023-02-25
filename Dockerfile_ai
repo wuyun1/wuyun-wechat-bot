@@ -89,6 +89,7 @@ RUN if [ "x$ALIYUN" != "xnone" ] ; then \
 USER user
 
 ADD ./app /app/app/
+ADD ./src/text-tu-audio.html /app/src/text-tu-audio.html
 ADD ./src/chatbot.html /app/src/chatbot.html
 ADD ./src/pdf.html /app/src/pdf.html
 

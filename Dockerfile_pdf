@@ -1,0 +1,37 @@
+FROM python:latest
+
+RUN rm -rf /etc/apt/sources.list.d/*
+
+ADD ./sources-debian.list /tmp/sources.list.1
+
+RUN if [ "x$ALIYUN" != "xnone" ] ; then mv -f /tmp/sources.list.1 /etc/apt/sources.list ; else rm -rf /tmp/sources.list.1 ; fi
+
+RUN apt-get update -y && apt-get upgrade -y && apt-get install -y libgl1-mesa-glx && apt-get autoremove -y && apt-get clean && apt install -y libgl1-mesa-glx && apt-get clean && rm -fr /tmp/* /var/lib/apt/lists /root/.cache
+
+WORKDIR /app/
+
+COPY ./requirements-pdf.txt /app/requirements.txt
+
+RUN if [ "x$ALIYUN" != "xnone" ] ; then \
+      (python3 -m pip install --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple && python3 -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple); \
+    else \
+      python3 -m pip install --upgrade pip; \
+    fi && \
+    python3 -m pip install --upgrade --force-reinstall -r /app/requirements.txt && \
+    rm -fr /tmp/* /root/.cache
+
+# RUN apt-get install -y ffmpeg libsm6 libxext6  -y # libgl1-mesa-glx
+
+ADD ./app/pdf-api.py /app/app/
+ADD ./app/pdf.py /app/app/
+ADD ./src/pdf.html /app/src/pdf.html
+
+CMD ["python", "/app/app/pdf-api.py"]
+
+EXPOSE 3000
+
+
+ENV PDF_API_ACCESS_TOKEN=abc1234
+
+# docker build . -t docker.io/jonneywu/wechatbot:pdf -f Dockerfile_pdf  --squash
+# docker run -ti --name pdf-test  -p 3000:3000 --rm docker.io/jonneywu/wechatbot:pdf
