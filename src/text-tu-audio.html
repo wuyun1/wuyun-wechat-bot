@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>音频播放器</title>
+  <meta charset="UTF-8" />
+</head>
+
+<body>
+  <h1>音频播放器</h1>
+  <label for="text-input">请输入文本:</label>
+  <textarea id="text-input" type="text" value="">旅行者们，你好啊</textarea><br><br>
+  <button id="submit-btn">提交</button>
+  <button id="play-btn" disabled>播放</button>
+  <button id="download-btn" disabled>下载</button><br><br>
+  <audio id="audio-player"></audio>
+
+  <script>
+    const submitBtn = document.getElementById('submit-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const playBtn = document.getElementById('play-btn');
+    const audioPlayer = document.getElementById('audio-player');
+    const textInput = document.getElementById('text-input');
+    const apiUrl = '/text-to-audio';
+
+    // 提交按钮点击事件
+    submitBtn.addEventListener('click', async () => {
+
+      if (!textInput.value.trim()) {
+        return
+      }
+
+      // 将文本框中的文本作为 JSON 数据发送到 API 接口
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        body: JSON.stringify({ text: textInput.value }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+      // 将响应作为 blob 对象获取
+      const blob = await response.blob();
+      // 将 blob 对象转换为 URL
+      const audioUrl = URL.createObjectURL(blob);
+      // 将音频播放器的 src 属性设置为音频 URL
+      audioPlayer.src = audioUrl;
+
+      downloadBtn.disabled = false;
+      playBtn.disabled = false;
+    });
+
+    // 下载按钮点击事件
+    downloadBtn.addEventListener('click', async () => {
+      // 将文本框中的文本作为 JSON 数据发送到 API 接口
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        body: JSON.stringify({ text: textInput.value }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+      // 将响应作为 blob 对象获取
+      const blob = await response.blob();
+      // 创建一个链接对象，将 blob 对象作为链接地址，设置下载属性并单击链接以触发下载
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'audio.wav';
+      link.click();
+    });
+
+    // 播放按钮点击事件
+    playBtn.addEventListener('click', () => {
+      // 如果音频播放器没有播放任何音频，则返回
+      if (!audioPlayer.src) return;
+      // 如果音频播放器已经在播放，则暂停播放
+      if (audioPlayer.paused) {
+        audioPlayer.play();
+        playBtn.textContent = '暂停';
+      } else {
+        audioPlayer.pause();
+        playBtn.textContent = '播放';
+      }
+    });
+  </script>
+</body>
+
+</html>

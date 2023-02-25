@@ -111,3 +111,8 @@ export const pdf_to_word = (inputFile: string, outputFile: string) => {
   const testUtils = boa.import('app.pdf');
   testUtils.pdf_to_word(inputFile, outputFile);
 };
+
+export const text_to_audio_file = (text: string) => {
+  const testUtils = boa.import('app.vits.vits');
+  return testUtils.text_to_audio_file(text);
+};

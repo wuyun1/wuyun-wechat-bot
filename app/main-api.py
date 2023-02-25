@@ -26,22 +26,38 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-def random_string(letter_count, digit_count):
-    str1 = ''.join((random.choice(string.ascii_letters)
-                   for x in range(letter_count)))
-    str1 += ''.join((random.choice(string.digits) for x in range(digit_count)))
 
-    sam_list = list(str1)  # it converts the string to list.
-    # It uses a random.shuffle() function to shuffle the string.
-    random.shuffle(sam_list)
-    final_string = ''.join(sam_list)
-    return final_string
+class TextItem(BaseModel):
+    text: str = "旅行者们，你好啊"
 
+import uuid
+
+
+@app.post("/text-to-audio")
+async def http_text_to_audio(
+    text_item: TextItem,
+):
+
+    wav_file_path = "/tmp/test.wav"
+    try:
+        from  vits.vits import text_to_audio_file
+        wav_file_path = text_to_audio_file(text_item.text)
+
+        respose = FileResponse(path=wav_file_path, filename= os.path.basename(wav_file_path))
+        return respose
+    finally:
+        async def clean():
+            await asyncio.sleep(10)
+            if(os.path.exists(wav_file_path)):
+                os.remove(wav_file_path)
+        asyncio.create_task(clean())
 
 @app.post("/pdf-to-word")
-async def create_upload_files(
+async def http_pdf_to_word(
     file: UploadFile = File(description="file as UploadFile"),
 ):
+    word_file_path = "/tmp/test.docx"
+
     try:
         pdf_file_name = file.filename
 
@@ -54,7 +70,7 @@ async def create_upload_files(
 
         file_name = os.path.basename(pdf_file_name)
 
-        random_s = "pdf-to-word-" + random_string(8, 4)
+        random_s = "pdf-to-word-" + uuid.uuid4().hex
 
         pdf_file_path = os.path.join(temp_dir, random_s + pdf_file_name)
         word_file_name = file_name + '.docx'
@@ -74,7 +90,8 @@ async def create_upload_files(
     finally:
         async def clean():
             await asyncio.sleep(10)
-            os.remove(word_file_path)
+            if(os.path.exists(word_file_path)):
+                os.remove(word_file_path)
         asyncio.create_task(clean())
 
 
@@ -82,6 +99,7 @@ current_path = os.path.dirname(os.path.abspath(__file__))
 
 chatbot_html_file_path = os.path.join(current_path, "../src/chatbot.html")
 pdf_html_file_path = os.path.join(current_path, "../src/pdf.html")
+audio_html_file_path = os.path.join(current_path, "../src/text-tu-audio.html")
 
 
 @app.get("/pdf", response_class=HTMLResponse)
@@ -90,6 +108,12 @@ async def index():
         html = f.read()
     return html
 
+
+@app.get("/text-to-audio", response_class=HTMLResponse)
+async def index():
+    with open(audio_html_file_path, "r") as f:
+        html = f.read()
+    return html
 
 class Question(BaseModel):
     text: str = "用户: 写首诗\n小元: "

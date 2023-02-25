@@ -13,3 +13,13 @@ pydantic
 
 protobuf==3.20
 # tensorboardX
+
+
+Cython
+librosa
+matplotlib
+numpy
+phonemizer
+scipy
+Unidecode
+pypinyin

@@ -61,6 +61,24 @@ def text_to_audio(text):
 
     return (data , text2speech.fs)
 
+import uuid
+import os
+import soundfile as sf
+
+
+def text_to_audio_file(text):
+    temp_dir = "/tmp"
+
+    random_s = "text-to-audio-" + uuid.uuid4()
+
+    wav_file_path = os.path.join(temp_dir, random_s + ".wav")
+
+    wav,rate = text_to_audio(text)
+    import soundfile as sf
+
+    sf.write(wav_file_path,wav,samplerate=rate)
+    return wav_file_path
+
 
 if __name__ == "__main__":
 
@@ -74,6 +92,5 @@ if __name__ == "__main__":
 
     display(Audio(wav, rate=rate))
 
-    import soundfile as sf
 
     sf.write("./test.wav", wav,samplerate=rate)

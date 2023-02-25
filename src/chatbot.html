@@ -22,7 +22,7 @@
 </head>
 
 <body>
-  <h1>Chatbot</h1>
+  <h1>Chatbot | <a href="/text-to-audio">文本转语音</a> | <a href="/pdf">pdf 转 word</a></h1>
   <div id="chatlogContainer" class="container" style="height: 240px;overflow-y: auto;">
     <div id="chatlog">
       <pre class="auto-line chat-box-bot">您好!我是AI。我可以回答您的问题、写文章、写作业、翻译,对于一些法律等领域的问题我也可以给你提供信息。</pre>
@@ -35,6 +35,8 @@
     <label for="input">content:</label><br />
     <textarea id="input" style="width: 100%" rows="15">写首诗</textarea>
     <button type="submit" id="submit">Send</button>
+    <audio id="audio-player"></audio>
+
   </form>
   <script>
 
@@ -45,7 +47,84 @@
     const story_mode = document.getElementById("story_mode");
     const qa_mode = document.getElementById("qa_mode");
     const max_len = document.getElementById("max_len");
+    const audioPlayer = document.getElementById('audio-player');
     const container = document.getElementById("chatlogContainer"); // 获取容器元素
+
+    const apiAudioUrl = '/text-to-audio';
+
+
+
+    const playTextQueue = [];
+    const playAudioQueue = [];
+
+    let playPending = null;
+
+    const playAudio = async () => {
+
+      if (playAudioQueue.length === 0) {
+        return;
+      }
+
+      if (!audioPlayer.paused && audioPlayer.currentTime > 0) {
+        return;
+      }
+
+      // 将音频播放器的 src 属性设置为音频 URL
+
+      audioPlayer.src = playAudioQueue.shift();
+
+      const next = () => {
+        audioPlayer.removeEventListener("ended", next);
+        playAudio();
+      };
+      audioPlayer.addEventListener("ended", next);
+      audioPlayer.play();
+    }
+
+    const playText = async (text) => {
+
+      if (!text || !text.trim()) {
+        return
+      }
+
+      playTextQueue.push(text);
+
+      if (playPending) {
+        await playPending;
+
+        playPending = null;
+      }
+
+      if (playTextQueue.length === 0) {
+        return;
+      }
+
+      let _resolve = null;
+      let _reject = null;
+
+      playPending = new Promise((resolve, reject) => {
+        _resolve = resolve;
+        _reject = reject;
+      });
+
+      // 将文本框中的文本作为 JSON 数据发送到 API 接口
+      const response = await fetch(apiAudioUrl, {
+        method: 'POST',
+        body: JSON.stringify({ text: playTextQueue.shift() }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+      // 将响应作为 blob 对象获取
+      const blob = await response.blob();
+      // 将 blob 对象转换为 URL
+      const audioUrl = URL.createObjectURL(blob);
+      playAudioQueue.push(audioUrl);
+
+      playAudio();
+
+      _resolve(null);
+      playPending = null;
+
+    }
 
     const sendMessage = async () => {
 
@@ -81,14 +160,30 @@
         const reader = response.body.getReader();
         if (story_mode.checked) {
           oldText = text
+          playAudioText = "";
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
             const chunk = new TextDecoder("utf-8").decode(value);
             text += chunk
+            playAudioText += chunk;
+
+            if (playAudioText.length > 10 && /[，。；,.;]/.test(chunk)) {
+
+              playText(playAudioText);
+
+              playAudioText = '';
+            }
+
             input.value = text
             input.scrollTop = input.scrollHeight;
           }
+
+          if (playAudioText.trim().length > 0) {
+            playText(playAudioText);
+            playAudioText = '';
+          }
+
           if (qa_mode.checked) {
             if (oldText.endsWith('用户：') || oldText.endsWith('用户:')) {
               text += "\n小元:"

@@ -41,6 +41,11 @@ const pdf_to_word = createWorkFn({
   functionName: 'pdf_to_word',
 });
 
+const text_to_audio_file = createWorkFn({
+  workFile: require.resolve('./py-utils'),
+  functionName: 'text_to_audio_file',
+});
+
 class Question {
   text: string;
   max_len: number;
@@ -145,6 +150,49 @@ const start = async () => {
     };
 
     app.post(
+      '/text-to-audio',
+      {
+        schema: {
+          // tags: ['file'],
+          body: {
+            type: 'object',
+            required: ['text'],
+            properties: {
+              text: { type: 'string', default: '旅行者们，你好啊' },
+              // aa: { type: 'string' },
+            },
+          },
+          consumes: ['application/json'],
+          // produces: ['application/json'],
+        } as FastifySchema,
+      },
+      async (request, reply) => {
+        try {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          const wav_file_path = await text_to_audio_file(request.body.text);
+
+          const stream = fs.createReadStream(wav_file_path);
+          reply.type('audio/wav');
+          reply.header(
+            'Content-Disposition',
+            `attachment; filename="${basename(wav_file_path)}"`
+          );
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          // stream.pipe(reply.res);
+          stream?.on('end', () => {
+            fs.unlinkSync(wav_file_path);
+          });
+          return reply.send(stream);
+        } catch (err) {
+          app.log.error(err);
+          reply.code(500).send();
+        }
+      }
+    );
+
+    app.post(
       '/pdf-to-word',
       {
         schema: {
@@ -222,11 +270,23 @@ const start = async () => {
     );
 
     const chatbot_html_file_path = join(__dirname, 'chatbot.html');
+    const pdf_html_file_path = join(__dirname, 'pdf.html');
+    const audio_html_file_path = join(__dirname, 'text-tu-audio.html');
 
     app.get('/', async (request, reply) => {
-      // reply.send({ hello: 'world' });
-      // console.log(`file: ${chatbot_html_file_path}`);
       const fileStream = createReadStream(chatbot_html_file_path, 'utf8');
+      reply.type('text/html');
+      return reply.send(fileStream);
+    });
+
+    app.get('/pdf', async (request, reply) => {
+      const fileStream = createReadStream(pdf_html_file_path, 'utf8');
+      reply.type('text/html');
+      return reply.send(fileStream);
+    });
+
+    app.get('/text-to-audio', async (request, reply) => {
+      const fileStream = createReadStream(audio_html_file_path, 'utf8');
       reply.type('text/html');
       return reply.send(fileStream);
     });
