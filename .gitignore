@@ -30,3 +30,8 @@ venv
 models--ClueAI--ChatYuan-large-v1
 
 transformers
+
+
+test.wav
+
+G_1434000.pth
