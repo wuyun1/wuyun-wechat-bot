@@ -1,6 +1,6 @@
 import os
 from fastapi.responses import HTMLResponse, FileResponse, StreamingResponse
-from fastapi import FastAPI, File, UploadFile, Request, Form, Header
+from fastapi import FastAPI, File, UploadFile, Request, Form, Header, Query, Response
 import uvicorn
 import asyncio
 from pdf import pdf_to_word
@@ -26,6 +26,7 @@ env_access_token = os.environ.get("PDF_API_ACCESS_TOKEN", "abc1234")
 @app.post("/pdf-to-word")
 async def http_pdf_to_word(
     file: UploadFile = File(description="file as UploadFile"),
+    is_get_file_path = Query(None),
     access_token_form: str = Form(None, alias="access_token"),
     access_token_header: str = Header(None, alias="access_token", )
 ):
@@ -38,10 +39,9 @@ async def http_pdf_to_word(
         access_token = access_token_header
 
     if access_token != env_access_token:
-
-        return {
+        return Response('''{
             "error": "无权限访问 access_token 不对"
-        }
+        }''', status_code= 403)
 
     word_file_path = "/tmp/test.docx"
 
@@ -69,17 +69,54 @@ async def http_pdf_to_word(
 
         pdf_to_word(pdf_file_path, word_file_path)
 
-        respose = FileResponse(path=word_file_path, filename=word_file_name)
 
         os.remove(pdf_file_path)
+
+
+        if is_get_file_path is not None:
+            return {
+                "file_path": word_file_path
+            }
+
+        respose = FileResponse(path=word_file_path, filename=word_file_name)
 
         return respose
     finally:
         async def clean():
-            await asyncio.sleep(10)
+            await asyncio.sleep(20)
             if(os.path.exists(word_file_path)):
                 os.remove(word_file_path)
         asyncio.create_task(clean())
+
+
+@app.get("/get-file")
+async def http_pdf_to_word(
+    file_path = Query(),
+    access_token_query: str = Query(None, alias="access_token"),
+    access_token_header: str = Header(None, alias="access_token", )
+):
+
+    access_token = ""
+    if access_token_query is not None:
+        access_token = access_token_query
+
+    if access_token is None:
+        access_token = access_token_header
+
+    if access_token != env_access_token:
+        return Response('''{
+            "error": "无权限访问 access_token 不对"
+        }''', status_code= 403)
+
+    if(os.path.exists(file_path)):
+        respose = FileResponse(path=file_path, filename=os.path.basename(file_path))
+
+        return respose
+    else:
+        return Response('''{
+            "error": "文件已经过期"
+        }''', status_code= 404)
+
 
 
 current_path = os.path.dirname(os.path.abspath(__file__))
