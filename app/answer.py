@@ -233,16 +233,21 @@ async def main():
         print(f"chunk: {data}")
         # print(f"chunk: {data}", end="")
 
-    res = answer(
+    answer(
         text=input_text,
-        sample=True,
+        sample=False,
         max_new_tokens=4,
         ondata=ondata
     )
 
-    # async for item in res():
-    #     print(f"res : = : {item}")
+    res = answer(
+        text=input_text,
+        sample=False,
+        max_new_tokens=4,
+        # ondata=ondata
+    )
 
+    print(f"res : = : {res}")
 
 if __name__ == "__main__":
     asyncio.run(main())

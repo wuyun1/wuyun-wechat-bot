@@ -4,6 +4,14 @@ import { createWorkFn } from '../../workerify';
 
 // dotenv.config();
 
+// export const delay = (t = 0) => {
+//   return new Promise((re) => {
+//     setTimeout(() => {
+//       re(null);
+//     }, t);
+//   });
+// };
+
 const require = createRequire(import.meta.url);
 
 async function main() {
@@ -20,7 +28,7 @@ async function main() {
 
   const json = {
     text: '用户: 写首诗\n小元:',
-    max_new_tokens: 60,
+    max_new_tokens: 160,
   };
 
   const stream = answer_sync(json);
@@ -31,8 +39,24 @@ async function main() {
     // console.log(chunk.toString());
   });
 
+  let _reject, _resolve;
+
+  const p = new Promise((resolve, reject) => {
+    _reject = reject;
+    _resolve = resolve;
+  });
+
   stream.on('end', () => {
+    console.log();
     console.log('Finished reading data');
+    _resolve(null);
+    // process.exit();
+  });
+
+  stream.on('error', (err) => {
+    console.log();
+    console.log('Error reading data', err);
+    _reject(err);
     // process.exit();
   });
 
@@ -49,6 +73,14 @@ async function main() {
 
   // const res = await answer(json2);
   // console.log(`res: ${res}`);
+
+  await p;
+
+  console.log(`begin exit`);
+
+  // await delay(3000);
+
+  // process.exit();
 }
 
 main();

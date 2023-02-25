@@ -77,7 +77,7 @@ export const createWorkFn = ({
   return (...args): any => {
     const _uuid = Date.now().toString(16) + Math.random().toString(16);
 
-    let worker = workerMap[workFile];
+    let worker: Worker = workerMap[workFile];
 
     if (!worker) {
       worker = getWorker(__filename);
@@ -104,9 +104,15 @@ export const createWorkFn = ({
         }
         if (type === 'data') {
           stream.push(data);
+          return;
         }
         if (type === 'end') {
           stream.push(null);
+          return;
+        }
+        if (type === 'exit') {
+          worker.terminate();
+          return;
         }
       });
 
@@ -205,18 +211,20 @@ if (!isMainThread && parentPort) {
 
           // // TODO: 这里后面还是要开启， 节约内存
           // if (tid) {
-          //     clearTimeout(tid);
+          //   clearTimeout(tid);
           // }
 
           // tid = setTimeout(() => {
-          //     tid = null;
-          //     if (Object.keys(streamMap).length === 0) {
-          //         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          //         // @ts-ignore
-          //         parentPort.off('message', lis);
-          //         process.exit();
-          //     }
-          // }, 1000);
+          //   tid = null;
+          //   if (Object.keys(streamMap).length === 0) {
+          //     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          //     // @ts-ignore
+          //     parentPort.off('message', lis);
+          //     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          //     // @ts-ignore
+          //     parentPort.postMessage(['exit', uuid]);
+          //   }
+          // }, 10000);
         };
         stream.on('data', ondata);
         stream.on('end', onend);
