@@ -10,7 +10,7 @@ RUN apt-get update -y && apt-get upgrade -y && apt-get install -y libgl1-mesa-gl
 
 WORKDIR /app/
 
-COPY ./requirements_wx.txt /app/requirements.txt
+COPY ./requirements-wx.txt /app/requirements.txt
 
 RUN if [ "x$ALIYUN" != "xnone" ] ; then \
       (python3 -m pip install --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple && python3 -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple); \
