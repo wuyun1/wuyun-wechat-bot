@@ -11,7 +11,7 @@ from pdf import pdf_to_word
 import logging
 import uuid
 
-env_access_token = os.environ.get("PDF_API_ACCESS_TOKEN", 'abcd1234')
+env_access_token = os.environ.get("PDF_API_ACCESS_TOKEN", 'abc1234')
 
 
 router = APIRouter()
