@@ -8,11 +8,10 @@ c_dir = str(Path(__file__).parent)
 
 if os.environ.get("ROOT_CURRENT_CWD") is None:
   os.environ["ROOT_CURRENT_CWD"] = str(c_dir)
-  if not os.path.exists("results"):
-    os.makedirs("results")
+#   if not os.path.exists("results"):
+#     os.makedirs("results")
 
 
-import matplotlib.pyplot as plt
 import IPython.display as ipd
 
 # import json
@@ -154,7 +153,6 @@ if __name__ == "__main__":
 
   audio,rate = text_to_audio(text)
 
-  ipd.display(ipd.Audio(audio, rate=rate))
 
   filename = 'test' #@param {type: "string"}
   audio_path = f'./{filename}.wav'

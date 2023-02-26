@@ -21,5 +21,6 @@ matplotlib
 numpy
 phonemizer
 scipy
+ipython
 Unidecode
 pypinyin
