@@ -128,6 +128,13 @@ import soundfile as sf
 
 import uuid
 
+def text_to_audio_bypes(text):
+
+    wav,rate = text_to_audio(text)
+    audio = ipd.Audio(wav, rate=rate)
+    return audio.data
+
+
 
 def text_to_audio_file(text):
     temp_dir = "/tmp"

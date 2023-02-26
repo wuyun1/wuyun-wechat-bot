@@ -84,7 +84,7 @@ def answer(text="", sample=True, top_p=1, temperature=0.7, ondata = None,max_new
                 is_first = False
                 return
             chunk = input_ids[-1:]
-            str = postprocess(tokenizer.decode(chunk))
+            str = postprocess(tokenizer.decode(chunk, skip_special_tokens=True))
             # print(f"chunk: {str}")
             ondata(str)
             # global_loop.call_soon_threadsafe(queue.put_nowait, str)

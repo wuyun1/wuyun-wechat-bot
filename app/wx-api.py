@@ -15,13 +15,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-import wx.tts as tts_router
-import wx.chat as chat_router
+# import wx.tts as tts_router
 import wx.pdf as pdf_router
 
 app.include_router(pdf_router.router)
-app.include_router(tts_router.router)
-app.include_router(chat_router.router)
+# app.include_router(tts_router.router)
 
 if __name__ == "__main__":
-    uvicorn.run("main-api:app", host="0.0.0.0", port=3000)
+    uvicorn.run("wx-api:app", host="0.0.0.0", port=3000)

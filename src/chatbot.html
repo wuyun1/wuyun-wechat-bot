@@ -168,7 +168,7 @@
             text += chunk
             playAudioText += chunk;
 
-            if (playAudioText.length > 10 && /[，。；,.;]/.test(chunk)) {
+            if (playAudioText.length > 10 && /[ -\n\t、，。；,.;]/.test(chunk)) {
 
               playText(playAudioText);
 

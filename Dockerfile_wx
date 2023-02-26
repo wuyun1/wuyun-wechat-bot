@@ -10,7 +10,7 @@ RUN apt-get update -y && apt-get upgrade -y && apt-get install -y libgl1-mesa-gl
 
 WORKDIR /app/
 
-COPY ./requirements-pdf.txt /app/requirements.txt
+COPY ./requirements_wx.txt /app/requirements.txt
 
 RUN if [ "x$ALIYUN" != "xnone" ] ; then \
       (python3 -m pip install --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple && python3 -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple); \
@@ -22,11 +22,13 @@ RUN if [ "x$ALIYUN" != "xnone" ] ; then \
 
 # RUN apt-get install -y ffmpeg libsm6 libxext6  -y # libgl1-mesa-glx
 
-ADD ./app/pdf-api.py /app/app/
+# ADD ./app/wx-api.py /app/app/
+# ADD ./app/wx/* /app/app/wx/
+# ADD ./app/vits/* /app/vits/wx/
 ADD ./app/pdf.py /app/app/
 ADD ./src/pdf.html /app/src/pdf.html
 
-CMD ["python", "/app/app/pdf-api.py"]
+CMD ["python", "/app/app/wx-api.py"]
 
 EXPOSE 3000
 

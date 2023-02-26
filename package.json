@@ -11,6 +11,7 @@
     "test-worker": "MODEL_NAME=ClueAI/ChatYuan-large-v1 MODEL_CLASS=T5ForConditionalGeneration node --no-warnings -r ts-node/register --experimental-specifier-resolution node --loader ts-node/esm src/test/work/main.ts",
     "test-api": "MODEL_NAME=ClueAI/ChatYuan-large-v1 MODEL_CLASS=T5ForConditionalGeneration node --no-warnings --experimental-specifier-resolution node -r ts-node/register --loader ts-node/esm ./src/main-api.ts",
     "test-api2": "MODEL_NAME=ClueAI/ChatYuan-large-v1 MODEL_CLASS=T5ForConditionalGeneration ./node_modules/@waynew/boa/.miniconda/bin/python ./app/main-api.py",
+    "test-api3": "PDF_API_ACCESS_TOKEN=abcd1234 MODEL_NAME=ClueAI/ChatYuan-large-v1 MODEL_CLASS=T5ForConditionalGeneration ./node_modules/@waynew/boa/.miniconda/bin/python -m uvicorn --app-dir ./app  wx-api:app --host 0.0.0.0 --port 3000 --reload",
     "test-boa": "node --no-warnings --experimental-specifier-resolution node -r ts-node/register --loader ts-node/esm ./app/test-boa.ts",
     "test-boa2": "./node_modules/@waynew/boa/.miniconda/bin/python ./app/answer.py",
     "gettoken": "node ---no-warnings -experimental-specifier-resolution node -r ts-node/register --loader ts-node/esm src/chatgpt-test.ts",
