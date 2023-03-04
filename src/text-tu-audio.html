@@ -26,10 +26,13 @@
     // 提交按钮点击事件
     submitBtn.addEventListener('click', async () => {
 
+
       if (!textInput.value.trim()) {
         return
       }
 
+      submitBtn.disabled = true;
+      submitBtn.innerText = '转换中...';
       // 将文本框中的文本作为 JSON 数据发送到 API 接口
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -43,6 +46,8 @@
       // 将音频播放器的 src 属性设置为音频 URL
       audioPlayer.src = audioUrl;
 
+      submitBtn.disabled = false;
+      submitBtn.innerText = '提交';
       downloadBtn.disabled = false;
       playBtn.disabled = false;
     });
@@ -77,6 +82,9 @@
         playBtn.textContent = '播放';
       }
     });
+    audioPlayer.onended = () => {
+      playBtn.textContent = '播放';
+    }
   </script>
 </body>
 

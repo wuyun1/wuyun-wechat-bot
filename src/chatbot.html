@@ -34,13 +34,10 @@
     <label for="qa_mode">自动拼接问答模式: </label><input type="checkbox" id="qa_mode" checked><br />
     <label for="input">content:</label><br />
     <textarea id="input" style="width: 100%" rows="15">写首诗</textarea>
-    <button type="submit" id="submit">Send</button>
-    <audio id="audio-player"></audio>
-
+    <button type="submit" id="submit">提交</button>
+    <audio controls id="audio-player"></audio>
   </form>
   <script>
-
-
     const chatlog = document.getElementById("chatlog");
     const input = document.getElementById("input");
     const submit = document.getElementById("submit");
@@ -81,6 +78,14 @@
       audioPlayer.play();
     }
 
+    function blobToBase64(blob) {
+      return new Promise((resolve, _) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(blob);
+      });
+    }
+
     const playText = async (text) => {
 
       if (!text || !text.trim()) {
@@ -115,6 +120,9 @@
       });
       // 将响应作为 blob 对象获取
       const blob = await response.blob();
+
+      // const audioUrl = await blobToBase64(blob);
+
       // 将 blob 对象转换为 URL
       const audioUrl = URL.createObjectURL(blob);
       playAudioQueue.push(audioUrl);
@@ -126,13 +134,23 @@
 
     }
 
+
+    let isClickPlay = false;
+
+
     const sendMessage = async () => {
+
+      if (!isClickPlay) {
+        audioPlayer.play();
+        isClickPlay = true;
+      }
 
       let text = input.value;
 
       if (text.trim() === "") {
         return;
       }
+
       try {
         input.disabled = true;
         submit.disabled = true;
@@ -168,7 +186,7 @@
             text += chunk
             playAudioText += chunk;
 
-            if (playAudioText.length > 10 && /[ -\n\t、，。；,.;]/.test(chunk)) {
+            if (playAudioText.length > 10 && /[ \-\n\t、，。；,.;]/.test(chunk)) {
 
               playText(playAudioText);
 
